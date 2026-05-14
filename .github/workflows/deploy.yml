@@ -25,6 +25,7 @@ jobs:
         username: ${{ secrets.VPS_USER }}
         key: ${{ secrets.VPS_KEY }}
         script: |
+          sudo chown -R ${{ secrets.VPS_USER }}:${{ secrets.VPS_USER }} /opt/exe
           rm -rf /opt/exe/*
     
     - name: Copy files to VPS
