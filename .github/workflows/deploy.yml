@@ -1,0 +1,73 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Publish .NET app
+      run: dotnet publish ./EXE201-Backend.csproj -c Release -r linux-x64 --self-contained true --output ./published
+
+    - name: Clear target directory on VPS
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_KEY }}
+        script: |
+          rm -rf /opt/exe/*
+    
+    - name: Copy files to VPS
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_KEY }}
+        source: "published/"
+        target: "/opt/exe"
+
+    # - name: Copy images to temporary directory
+    #   uses: appleboy/scp-action@v0.1.7
+    #   with:
+    #     host: ${{ secrets.VPS_HOST }}
+    #     username: ${{ secrets.VPS_USER }}
+    #     key: ${{ secrets.VPS_KEY }}
+    #     source: "images/"
+    #     target: "/tmp"
+    
+    # - name: Move images to web directory
+    #   uses: appleboy/ssh-action@v1.0.0
+    #   with:
+    #     host: ${{ secrets.VPS_HOST }}
+    #     username: ${{ secrets.VPS_USER }}
+    #     key: ${{ secrets.VPS_KEY }}
+    #     script: |
+    #       sudo mkdir -p /var/www/images
+    #       sudo rm -rf /var/www/images/*
+    #       sudo cp -a /tmp/images/. /var/www/images/
+    #       sudo rm -rf /tmp/images
+    #       sudo chown -R websvc:webapps /var/www/images
+    #       sudo chmod -R 775 /var/www/images
+    #       sudo find /var/www/images -type d -exec chmod g+s {} \;
+
+
+    - name: Restart service on VPS
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_KEY }}
+        script: |
+          sudo chmod +x /opt/exe/EXE-Backend
+          sudo chown -R exe:exe /opt/exe
+          sudo systemctl restart exe.service
