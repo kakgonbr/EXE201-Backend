@@ -8,9 +8,9 @@ namespace EXE201_Backend.Utils.Services
 {
     public static class VnPayService
     {
-        private const string VnpVersion = "2.1.0";
+        private const string VnpVersion = "2.1.1";
         private const string VnpCommand = "pay";
-        private const string OrderType = "other";
+        private const string OrderType = "topup";
 
         /// <summary>
         /// Adapted from https://github.com/kakgonbr/PRJ-TOMCAT-WEB/blob/main/src/main/java/service/vnpay/PortalService.java
@@ -41,7 +41,7 @@ namespace EXE201_Backend.Utils.Services
                 ["vnp_Amount"] = amount.ToString(),
                 ["vnp_CurrCode"] = "VND",
                 ["vnp_TxnRef"] = txnRef,
-                ["vnp_OrderInfo"] = $"Thanh toan don hang:{txnRef}",
+                ["vnp_OrderInfo"] = $"Thanhtoandonhang{txnRef}",
                 ["vnp_OrderType"] = OrderType,
                 ["vnp_ReturnUrl"] = VnpConfig.VnpReturnUrl,
                 ["vnp_IpAddr"] = ipAddr

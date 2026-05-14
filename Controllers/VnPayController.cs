@@ -11,7 +11,7 @@ namespace EXE201_Backend.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok(VnPayService.GetLink("127.0.0.1", "", 1000000, "vn", VnpConfig.GetRandomNumber(10)));
+            return Ok(VnPayService.GetLink("123.19.192.191, 123.19.192.191", "", 1000000, "vn", VnpConfig.GetRandomNumber(10)));
         }
     }
 }
