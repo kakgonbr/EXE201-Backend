@@ -6,11 +6,7 @@ namespace EXE201_Backend
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            var allowedOrigins = new[]
-            {
-                "http://localhost:3000",
-                "https://exe-101-five.vercel.app/"
-            };
+            var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")?.Split(',') ?? Array.Empty<string>();
 
             builder.Services.AddCors(options =>
             {
