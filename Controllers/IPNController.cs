@@ -54,7 +54,8 @@ namespace EXE201_Backend.Controllers
             string calculatedHash = VnpConfig.HashAllFields(fields);
 
             bool finalPayment = txnRef.StartsWith('f');
-            int bookingId = finalPayment ? int.Parse(txnRef.Substring(1).Split("_")[0]) : int.Parse(txnRef.Split("_")[0]);
+
+            _logger.LogInformation("txnref: {Ref}", txnRef);
 
             bool success = false;
             if (string.Equals(calculatedHash, secureHash, StringComparison.OrdinalIgnoreCase))
