@@ -1,3 +1,7 @@
+using EXE201_Backend.Data;
+using EXE201_Backend.Services;
+using Microsoft.EntityFrameworkCore;
+
 namespace EXE201_Backend
 {
     public class Program
@@ -5,6 +9,11 @@ namespace EXE201_Backend
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.AddAutoMapper(cfg => cfg.AddProfile<Utils.DtoMapper>());
+
+            builder.Services.AddDbContext<ExeContext>(options =>
+                options.UseSqlServer(Environment.GetEnvironmentVariable("DATABASE_CONNECTION")));
 
             var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")?.Split(',') ?? Array.Empty<string>();
 
@@ -18,6 +27,9 @@ namespace EXE201_Backend
                           .AllowCredentials();
                 });
             });
+
+            builder.Services.AddSingleton<IConfigurationService, ConfigurationService>()
+                .AddSingleton<ITimeProvider, TimeMachine>();
 
             builder.Services.AddControllers();
 
