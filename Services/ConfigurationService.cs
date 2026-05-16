@@ -3,6 +3,11 @@ using System.Reflection;
 
 namespace EXE201_Backend.Services
 {
+    /// <summary>
+    /// Specific configuration service implementation for reading settings from environment variables. 
+    /// It uses reflection to automatically map environment variables to properties, 
+    /// allowing for easy extension by simply adding new properties to the class.
+    /// </summary>
     public class ConfigurationService : IConfigurationService
     {
         public string JWT_KEY { get; set; } = default!;
@@ -15,6 +20,8 @@ namespace EXE201_Backend.Services
         public string SE_MERCHANT { get; set; } = default!;
         public string SE_SECRET { get; set; } = default!;
         public string DATABASE_CONNECTION { get; set; } = default!;
+        public string IMAGE_DIR { get; set; } = default!;
+        public int IMAGE_EXPIRE_SEC { get; set; } = default!;
 
         public ConfigurationService()
         {

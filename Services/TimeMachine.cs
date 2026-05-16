@@ -1,5 +1,8 @@
 ﻿namespace EXE201_Backend.Services
 {
+    /// <summary>
+    /// Time provider implementation that allows manipulation of the current time for testing purposes.
+    /// </summary>
     public class TimeMachine : ITimeProvider
     {
         public DateTime Now => DateTime.Now.Add(_offset);

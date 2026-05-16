@@ -1,6 +1,10 @@
 using EXE201_Backend.Data;
+using EXE201_Backend.Repositories;
 using EXE201_Backend.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace EXE201_Backend
 {
@@ -28,12 +32,26 @@ namespace EXE201_Backend
                 });
             });
 
-            builder.Services.AddSingleton<IConfigurationService, ConfigurationService>()
+            builder.Services
+                .AddScoped<IUserRepository, UserRepository>()
+                .AddSingleton<IConfigurationService, ConfigurationService>()
+                .AddSingleton<IImageService, ImageService>()
+                .AddSingleton<IUserService, UserService>()
                 .AddSingleton<ITimeProvider, TimeMachine>();
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers().AddJsonOptions(o =>
+            {
+                o.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            });
 
             var app = builder.Build();
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(Environment.GetEnvironmentVariable("IMAGE_DIR")!),
+                RequestPath = "/images"
+            });
 
             app.UseRouting();
 

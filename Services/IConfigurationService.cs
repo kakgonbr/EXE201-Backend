@@ -12,5 +12,7 @@
         string VNP_RETURN { get; set; }
         string VNP_SECRET { get; set; }
         string VNP_TMN { get; set; }
+        string IMAGE_DIR { get; set; }
+        int IMAGE_EXPIRE_SEC { get; set; }
     }
 }
