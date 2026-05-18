@@ -87,7 +87,7 @@ namespace EXE201_Backend.Services
             var user = await _userRepository.GetByEmailAsync(email);
             if (user != null && user.Verified && user.IsActive)
             {
-                var result = new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, password);
+                var result = new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash!, password);
                 if (result == PasswordVerificationResult.Success)
                 {
                     var claims = new[]
