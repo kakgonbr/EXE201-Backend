@@ -20,12 +20,12 @@ namespace EXE201_Backend.Services
 
         public async Task<UserDto> GetUser(int id)
         {
-            return _mapper.Map<UserDto>(await _userRepository.GetById(id));
+            return _mapper.Map<UserDto>(await _userRepository.GetByIdAsync(id));
         }
 
         public async Task<PagedResult<UserDto>> GetUsers(int page, int pageSize)
         {
-            var users = await _userRepository.GetAll(page, pageSize);
+            var users = await _userRepository.GetAllAsync(page, pageSize);
             return _mapper.MapPagedResult<User, UserDto>(users);
         }
     }

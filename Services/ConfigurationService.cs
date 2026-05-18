@@ -22,6 +22,14 @@ namespace EXE201_Backend.Services
         public string DATABASE_CONNECTION { get; set; } = default!;
         public string IMAGE_DIR { get; set; } = default!;
         public int IMAGE_EXPIRE_SEC { get; set; } = default!;
+        public string SMTP_SERVER { get; set; } = default!;
+        public int SMTP_PORT { get; set; } = default!;
+        public string SMTP_EMAIL { get; set; } = default!;
+        public string SMTP_PASSWORD { get; set; } = default!;
+        public string SMTP_FROM { get; set; } = default!;
+        public string SELF_SCHEME { get; set; } = default!;
+        public string SELF_HOST { get; set; } = default!;
+
 
         public ConfigurationService()
         {

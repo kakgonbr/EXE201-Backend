@@ -3,6 +3,8 @@ using EXE201_Backend.Repositories;
 using EXE201_Backend.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -32,11 +34,26 @@ namespace EXE201_Backend
                 });
             });
 
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+
+                ValidIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
+                ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
+                IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY")!))
+            };
+
             builder.Services
                 .AddScoped<IUserRepository, UserRepository>()
                 .AddSingleton<IConfigurationService, ConfigurationService>()
-                .AddSingleton<IImageService, ImageService>()
-                .AddSingleton<IUserService, UserService>()
+                .AddScoped<IImageService, ImageService>()
+                .AddScoped<IUserService, UserService>()
+                .AddScoped<IMailService, MailService>()
+                .AddScoped<IAuthService, AuthService>()
                 .AddSingleton<ITimeProvider, TimeMachine>();
 
             builder.Services.AddControllers().AddJsonOptions(o =>

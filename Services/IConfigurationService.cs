@@ -14,5 +14,12 @@
         string VNP_TMN { get; set; }
         string IMAGE_DIR { get; set; }
         int IMAGE_EXPIRE_SEC { get; set; }
+        string SMTP_SERVER { get; set; }
+        int SMTP_PORT { get; set; }
+        string SMTP_EMAIL { get; set; }
+        string SMTP_PASSWORD { get; set; }
+        string SMTP_FROM { get; set; }
+        string SELF_SCHEME { get; set; }
+        string SELF_HOST { get; set; }
     }
 }
