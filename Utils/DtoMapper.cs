@@ -7,6 +7,7 @@ namespace EXE201_Backend.Utils
         public DtoMapper()
         {
             CreateMap<Models.User, UserDto>();
+            CreateMap<Models.Workshop, WorkshopDisplayDto>();
         }
     }
 }

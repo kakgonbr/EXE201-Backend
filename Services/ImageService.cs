@@ -114,7 +114,7 @@
             _imageTrackers.Add(newTracker);
         }
 
-        public async Task<string> Upload(IFormFile image)
+        public async Task<string> Upload(IFormFile image, CancellationToken cancellationToken = default)
         {
             if (image == null || image.Length == 0)
             {
@@ -134,7 +134,7 @@
 
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
-                await image.CopyToAsync(stream);
+                await image.CopyToAsync(stream, cancellationToken);
             }
 
             return uniqueName;

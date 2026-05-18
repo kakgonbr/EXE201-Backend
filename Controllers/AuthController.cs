@@ -1,4 +1,4 @@
-﻿using EXE201_Backend.Models;
+﻿using EXE201_Backend.Models.Requests;
 using EXE201_Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
@@ -19,13 +19,13 @@ namespace EXE201_Backend.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] AuthRequest request)
+        public async Task<IActionResult> Register([FromBody] AuthRequest request, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
             {
                 return BadRequest("Email and password are required.");
             }
-            bool success = await _authService.Register(request.Email, request.Password);
+            bool success = await _authService.Register(request.Email, request.Password, cancellationToken);
             if (success)
             {
                 return Ok("Registration successful. Please check your email for the OTP.");
@@ -37,13 +37,13 @@ namespace EXE201_Backend.Controllers
         }
 
         [HttpGet("confirm")]
-        public async Task<IActionResult> ConfirmOtp([FromQuery] string email, [FromQuery] string otp)
+        public async Task<IActionResult> ConfirmOtp([FromQuery] string email, [FromQuery] string otp, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(otp) || string.IsNullOrEmpty(email))
             {
                 return BadRequest("Invalid OTP.");
             }
-            bool success = await _authService.Confirm(email, otp);
+            bool success = await _authService.Confirm(email, otp, cancellationToken);
             if (success)
             {
                 return Ok("OTP confirmed. Your account is now active, you may login.");
@@ -55,13 +55,13 @@ namespace EXE201_Backend.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] AuthRequest request)
+        public async Task<IActionResult> Login([FromBody] AuthRequest request, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
             {
                 return BadRequest("Email and password are required.");
             }
-            var token = await _authService.Login(request.Email, request.Password);
+            var token = await _authService.Login(request.Email, request.Password, cancellationToken);
             if (token != null)
             {
                 return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });

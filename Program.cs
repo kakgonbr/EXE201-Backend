@@ -48,13 +48,15 @@ namespace EXE201_Backend
             };
 
             builder.Services
-                .AddScoped<IUserRepository, UserRepository>()
+                .AddSingleton<ITimeProvider, TimeMachine>()
                 .AddSingleton<IConfigurationService, ConfigurationService>()
+                .AddScoped<IUserRepository, UserRepository>()
                 .AddScoped<IImageService, ImageService>()
                 .AddScoped<IUserService, UserService>()
                 .AddScoped<IMailService, MailService>()
                 .AddScoped<IAuthService, AuthService>()
-                .AddSingleton<ITimeProvider, TimeMachine>();
+                .AddScoped<IWorkshopRepository, WorkshopRepository>()
+                .AddScoped<IWorkshopService, WorkshopService>();
 
             builder.Services.AddControllers().AddJsonOptions(o =>
             {

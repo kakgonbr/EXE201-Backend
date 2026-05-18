@@ -9,9 +9,7 @@ public partial class WorkshopSchedule
 
     public int WorkshopId { get; set; }
 
-    public DateTime StartTime { get; set; }
-
-    public DateTime EndTime { get; set; }
+    public DateOnly StartOn { get; set; }
 
     public bool CreatedFromRepeat { get; set; }
 

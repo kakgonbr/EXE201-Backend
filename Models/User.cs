@@ -1,4 +1,7 @@
-﻿namespace EXE201_Backend.Models;
+﻿using System;
+using System.Collections.Generic;
+
+namespace EXE201_Backend.Models;
 
 public partial class User
 {

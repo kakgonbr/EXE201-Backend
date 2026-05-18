@@ -7,8 +7,6 @@ public partial class Workshop
 {
     public int Id { get; set; }
 
-    public double Rating { get; set; }
-
     public string? ThumbnailLink { get; set; }
 
     public string Title { get; set; } = null!;
@@ -21,9 +19,13 @@ public partial class Workshop
 
     public string? InstructorImgLink { get; set; }
 
-    public decimal Price { get; set; }
-
     public int CategoryId { get; set; }
+
+    public int Duration { get; set; }
+
+    public string Level { get; set; } = null!;
+
+    public string Language { get; set; } = null!;
 
     public int CreatedBy { get; set; }
 
