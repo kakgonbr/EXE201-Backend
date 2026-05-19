@@ -3,6 +3,7 @@ using EXE201_Backend.Models;
 using EXE201_Backend.Extensions;
 using Microsoft.EntityFrameworkCore;
 using EXE201_Backend.Services;
+using EXE201_Backend.Models.Responses;
 
 namespace EXE201_Backend.Repositories
 {
@@ -65,15 +66,10 @@ namespace EXE201_Backend.Repositories
             return await _db.SaveChangesAsync(cancellationToken);
         }
 
-        /// <summary>
-        /// Search / filter / sort / paginate workshops. All filter parameters are optional (nullable).
-        /// Includes related entities useful for listing (price range, schedules, reviews, images) so callers
-        /// can compute display fields (min/max price, upcoming schedules, rating, review count) in service/DTO layer.
-        /// </summary>
         public async Task<PagedResult<Workshop>> SearchAsync(
             string? query = null,
             IEnumerable<string>? locations = null,
-            IEnumerable<int>? categoryIds = null,
+            IEnumerable<string>? categories = null,
             IEnumerable<string>? levels = null,
             decimal? priceMin = null,
             decimal? priceMax = null,
@@ -82,6 +78,7 @@ namespace EXE201_Backend.Repositories
             int? scheduleWithinDays = null, // find workshops with schedules within next N days
             WorkshopSort? sortBy = null,
             bool sortDesc = false,
+            int userId = 0,
             int page = 1,
             int pageSize = 10,
             CancellationToken cancellationToken = default)
@@ -94,15 +91,14 @@ namespace EXE201_Backend.Repositories
                 && w.WorkshopSchedules.Any(ws => ws.StartOn > currentDate && ws.WorkshopTickets.Count != 0)
                 )
                 .Include(w => w.Category)
-                .Include(w => w.WorkshopSchedules!).ThenInclude(s => s.WorkshopTickets!)
+                .Include(w => w.Level)
+                .Include(w => w.Users.Where(u => u.Id == userId))
                 .Include(w => w.WorkshopReviews!)
                 .Include(w => w.WorkshopImages!);
 
-            // Adaptive general text search (title, description, instructor, category name)
             if (!string.IsNullOrWhiteSpace(query))
             {
                 var trimmed = query.Trim();
-                // Use EF.Functions.Like for SQL translation and partial matches
                 var like = $"%{trimmed}%";
                 q = q.Where(w =>
                     EF.Functions.Like(w.Title, like) ||
@@ -112,7 +108,6 @@ namespace EXE201_Backend.Repositories
                 );
             }
 
-            // Locations filter (any of provided locations)
             if (locations != null && locations.Any())
             {
                 var locList = locations.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).ToList();
@@ -122,24 +117,24 @@ namespace EXE201_Backend.Repositories
                 }
             }
 
-            // Categories filter
-            if (categoryIds != null && categoryIds.Any())
+            if (categories != null && categories.Any())
             {
-                var catList = categoryIds.ToList();
-                q = q.Where(w => catList.Contains(w.CategoryId));
+                var catList = categories.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).ToList();
+                if (catList.Count != 0)
+                {
+                    q = q.Where(w => catList.Contains(w.Category.Name));
+                }
             }
 
-            // Levels filter
             if (levels != null && levels.Any())
             {
                 var levelList = levels.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).ToList();
                 if (levelList.Count != 0)
                 {
-                    q = q.Where(w => levelList.Contains(w.Level));
+                    q = q.Where(w => levelList.Contains(w.Level.Name));
                 }
             }
 
-            // Duration range
             if (durationMin.HasValue)
             {
                 q = q.Where(w => w.Duration >= durationMin.Value);
@@ -149,7 +144,6 @@ namespace EXE201_Backend.Repositories
                 q = q.Where(w => w.Duration <= durationMax.Value);
             }
 
-            // Price range: workshop qualifies if it has at least one ticket within the range
             if (priceMin.HasValue)
             {
                 q = q.Where(w =>
@@ -167,21 +161,22 @@ namespace EXE201_Backend.Repositories
                 );
             }
 
-            // Schedules within next N days
             if (scheduleWithinDays.HasValue && scheduleWithinDays.Value >= 0)
             {
-                var today = DateOnly.FromDateTime(DateTime.UtcNow);
-                var upper = today.AddDays(scheduleWithinDays.Value);
+                var upper = currentDate.AddDays(scheduleWithinDays.Value);
                 q = q.Where(w =>
-                    w.WorkshopSchedules!.Any(s => s.StartOn >= today && s.StartOn <= upper)
-                );
+                    w.WorkshopSchedules!.Any(ws => ws.StartOn <= upper))
+                    .Include(w => w.WorkshopSchedules!.Where(ws => ws.StartOn > currentDate && ws.StartOn <= upper))
+                    .ThenInclude(s => s.WorkshopTickets!);
+            }
+            else
+            {
+                q = q.Include(w => w.WorkshopSchedules!.Where(ws => ws.StartOn > currentDate))
+                    .ThenInclude(s => s.WorkshopTickets!);
             }
 
-            // Sorting
-            // If no sort provided, default to newest (CreatedOn desc)
-            sortBy ??= WorkshopSort.Relevance;
+                sortBy ??= WorkshopSort.Relevance;
 
-            // Build ordering expressions. Some aggregates (price, rating) use sub-queries.
             switch (sortBy.Value)
             {
                 case WorkshopSort.Name:
@@ -189,27 +184,23 @@ namespace EXE201_Backend.Repositories
                     break;
 
                 case WorkshopSort.Price:
-                    // Order by minimum ticket price (workshop's cheapest available ticket). Workshops without tickets will be treated as having price 0.
                     q = sortDesc
                         ? q.OrderByDescending(w => w.WorkshopSchedules!
                                                     .SelectMany(s => s.WorkshopTickets!)
-                                                    .Select(t => (decimal?)t.Price)
-                                                    .DefaultIfEmpty(0).Min())
+                                                    .Min(wt => wt.Price))
                         : q.OrderBy(w => w.WorkshopSchedules!
                                         .SelectMany(s => s.WorkshopTickets!)
-                                        .Select(t => (decimal?)t.Price)
-                                        .DefaultIfEmpty(0).Min());
+                                        .Min(wt => wt.Price));
                     break;
 
                 case WorkshopSort.Rating:
-                    // Order by average rating (out of reviews). Workshops without reviews are treated as 0.
                     q = sortDesc
-                        ? q.OrderByDescending(w => w.WorkshopReviews!
-                                                    .Select(r => (double?)r.Rating)
-                                                    .DefaultIfEmpty(0).Average())
-                        : q.OrderBy(w => w.WorkshopReviews!
-                                        .Select(r => (double?)r.Rating)
-                                        .DefaultIfEmpty(0).Average());
+                        ? q.OrderByDescending(w => w.WorkshopReviews!.Any()
+                                                    ? w.WorkshopReviews.Select(r => (double?)r.Rating).Average()
+                                                    : 0)
+                        : q.OrderBy(w => w.WorkshopReviews!.Any()
+                                        ? w.WorkshopReviews.Select(r => (double?)r.Rating).Average()
+                                        : 0);
                     break;
 
                 case WorkshopSort.Duration:
@@ -217,7 +208,7 @@ namespace EXE201_Backend.Repositories
                     break;
 
                 case WorkshopSort.Level:
-                    q = sortDesc ? q.OrderByDescending(w => w.Level) : q.OrderBy(w => w.Level);
+                    q = sortDesc ? q.OrderByDescending(w => w.Level.Id) : q.OrderBy(w => w.Level.Id);
                     break;
 
                 case WorkshopSort.Relevance:

@@ -1,6 +1,7 @@
 ﻿using EXE201_Backend.Data;
 using EXE201_Backend.Extensions;
 using EXE201_Backend.Models;
+using EXE201_Backend.Models.Responses;
 using Microsoft.EntityFrameworkCore;
 
 namespace EXE201_Backend.Repositories

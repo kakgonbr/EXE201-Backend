@@ -1,4 +1,4 @@
-﻿namespace EXE201_Backend.Models
+﻿namespace EXE201_Backend.Models.Responses
 {
     public class PagedResult<T>
     {

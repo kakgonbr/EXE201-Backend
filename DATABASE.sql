@@ -37,6 +37,14 @@ CREATE TABLE WorkshopCategories
     Name nvarchar(100) NOT NULL
 )
 
+CREATE TABLE WorkshopLevels
+(
+    Id int IDENTITY(1, 1) PRIMARY KEY,
+    Name varchar(20) NOT NULL,
+
+    CONSTRAINT ck_workshoplevel_name CHECK (Name IN ('Elementary', 'Intermediate', 'Advanced'))
+)
+
 CREATE TABLE Workshops
 (
     Id int IDENTITY(1, 1) PRIMARY KEY,
@@ -48,15 +56,15 @@ CREATE TABLE Workshops
     InstructorImgLink varchar(256),
     CategoryId int NOT NULL,
     Duration int NOT NULL, -- in minutes
-    Level varchar(20) NOT NULL DEFAULT 'elementary',
+    LevelId int NOT NULL,
     Language varchar(2) NOT NULL DEFAULT 'en', -- ISO language code
     CreatedBy int NOT NULL,
     CreatedOn datetime NOT NULL DEFAULT GETDATE(),
     Status varchar(10) NOT NULL DEFAULT 'draft',
 
     CONSTRAINT ck_workshop_status CHECK (Status IN ('draft', 'awaiting', 'verified', 'removed', 'ended')),
-    CONSTRAINT ck_workshop_level CHECK (Level IN ('elementary', 'intermediate', 'advanced')),
     CONSTRAINT fk_workshop_category FOREIGN KEY (CategoryId) REFERENCES WorkshopCategories,
+    CONSTRAINT fk_workshop_level FOREIGN KEY (LevelId) REFERENCES WorkshopLevels,
     CONSTRAINT fk_workshop_user FOREIGN KEY (CreatedBy) REFERENCES Users
 )
 
@@ -173,6 +181,15 @@ SELECT @user2 = Id FROM Users WHERE Email = 'user2@example.com';
 SELECT @host1 = Id FROM Users WHERE Email = 'host1@example.com';
 SELECT @host2 = Id FROM Users WHERE Email = 'host2@example.com';
 
+IF NOT EXISTS (SELECT 1 FROM WorkshopLevels WHERE Name = 'Elementary')
+    INSERT INTO WorkshopLevels (Name) VALUES ('Elementary');
+
+IF NOT EXISTS (SELECT 1 FROM WorkshopLevels WHERE Name = 'Intermediate')
+    INSERT INTO WorkshopLevels (Name) VALUES ('Intermediate');
+
+IF NOT EXISTS (SELECT 1 FROM WorkshopLevels WHERE Name = 'Advanced')
+    INSERT INTO WorkshopLevels (Name) VALUES ('Advanced');
+
 IF NOT EXISTS (SELECT 1 FROM WorkshopCategories WHERE Name = 'Programming')
     INSERT INTO WorkshopCategories (Name) VALUES ('Programming');
 
@@ -183,14 +200,18 @@ IF NOT EXISTS (SELECT 1 FROM WorkshopCategories WHERE Name = 'Photography')
     INSERT INTO WorkshopCategories (Name) VALUES ('Photography');
 
 DECLARE @catProg INT, @catArt INT, @catPhoto INT;
+DECLARE @lvlElem INT, @lvlInter INT, @lvlAdv INT;
 SELECT @catProg = Id FROM WorkshopCategories WHERE Name = 'Programming';
 SELECT @catArt = Id FROM WorkshopCategories WHERE Name = 'Art';
 SELECT @catPhoto = Id FROM WorkshopCategories WHERE Name = 'Photography';
+SELECT @lvlElem = Id FROM WorkshopLevels WHERE Name = 'Elementary';
+SELECT @lvlInter = Id FROM WorkshopLevels WHERE Name = 'Intermediate';
+SELECT @lvlAdv = Id FROM WorkshopLevels WHERE Name = 'Advanced';
 
 -- Insert two sample workshops (hosts are existing users). Capture ids.
 DECLARE @wk1 INT, @wk2 INT;
 
-INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, Level, Language, CreatedBy, Status, ThumbnailLink)
+INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
 VALUES (
     'Intro to Modern C# (.NET 8)',
     'A hands-on workshop covering modern C# features and building a small web API on .NET 8.',
@@ -199,7 +220,7 @@ VALUES (
     'https://via.placeholder.com/150',
     @catProg,
     120,
-    'elementary',
+    @lvlElem,
     'en',
     @host1,
     'verified',
@@ -207,7 +228,7 @@ VALUES (
 );
 SET @wk1 = SCOPE_IDENTITY();
 
-INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, Level, Language, CreatedBy, Status, ThumbnailLink)
+INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
 VALUES (
     'Landscape Photography Basics',
     'Learn composition, camera settings, and editing for striking landscape photos.',
@@ -216,7 +237,7 @@ VALUES (
     'https://via.placeholder.com/150',
     @catPhoto,
     90,
-    'intermediate',
+    @lvlInter,
     'vi',
     @host2,
     'verified',
@@ -309,5 +330,299 @@ VALUES (@user2, @t_w2_s3_afternoon, 150000, 'success');
 
 INSERT INTO WorkshopParticipants (ParticipantId, TicketId, Status)
 VALUES (@user1, @t_w2_s4_evening, 'unpaid');
+
+-- Additional test data to exercise WorkshopRepository.SearchAsync filters and sorts
+-- Appended after existing inserts
+
+-- Add more categories
+IF NOT EXISTS (SELECT 1 FROM WorkshopCategories WHERE Name = 'Music')
+    INSERT INTO WorkshopCategories (Name) VALUES ('Music');
+
+IF NOT EXISTS (SELECT 1 FROM WorkshopCategories WHERE Name = 'Cooking')
+    INSERT INTO WorkshopCategories (Name) VALUES ('Cooking');
+
+IF NOT EXISTS (SELECT 1 FROM WorkshopCategories WHERE Name = 'Design')
+    INSERT INTO WorkshopCategories (Name) VALUES ('Design');
+
+DECLARE @catMusic INT, @catCooking INT, @catDesign INT;
+SELECT @catMusic = Id FROM WorkshopCategories WHERE Name = 'Music';
+SELECT @catCooking = Id FROM WorkshopCategories WHERE Name = 'Cooking';
+SELECT @catDesign = Id FROM WorkshopCategories WHERE Name = 'Design';
+
+-- Reuse existing users: @host1, @host2, @user1, @user2
+-- Ensure variables are set (they were set earlier in file). If not present, select again.
+DECLARE @maybe_user1 INT, @maybe_user2 INT, @maybe_host1 INT, @maybe_host2 INT;
+SELECT @maybe_user1 = Id FROM Users WHERE Email = 'user1@example.com';
+SELECT @maybe_user2 = Id FROM Users WHERE Email = 'user2@example.com';
+SELECT @maybe_host1 = Id FROM Users WHERE Email = 'host1@example.com';
+SELECT @maybe_host2 = Id FROM Users WHERE Email = 'host2@example.com';
+
+-- Insert more workshops with varied levels, durations, languages, statuses
+-- Some workshops will be "verified" with schedules+tickets (included in search)
+-- Some will be "verified" but have schedules with NO tickets (excluded by initial filter)
+-- Some will be "draft" or other statuses (excluded by status check)
+DECLARE @wk3 INT, @wk4 INT, @wk5 INT, @wk6 INT, @wk7 INT, @wk8 INT, @wk9 INT;
+
+-- Advanced ASP.NET Performance (Programming, advanced, long duration, multiple ticket prices)
+INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+VALUES (
+    'Advanced ASP.NET Performance',
+    'Deep dive: profiling, caching, and high throughput patterns for ASP.NET on .NET 8.',
+    'Room B - Building 1',
+    'host1',
+    'https://via.placeholder.com/150',
+    @catProg,
+    180,
+    @lvlAdv,
+    'en',
+    @maybe_host1,
+    'verified',
+    'https://via.placeholder.com/300'
+);
+SET @wk3 = SCOPE_IDENTITY();
+
+-- Watercolor for Beginners (Art, elementary, short duration)
+INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+VALUES (
+    'Watercolor for Beginners',
+    'Hands-on introduction to watercolor techniques, brushes, and color mixing.',
+    'Studio 1 - Art Wing',
+    'host2',
+    'https://via.placeholder.com/150',
+    @catArt,
+    90,
+    @lvlElem,
+    'en',
+    @maybe_host2,
+    'verified',
+    'https://via.placeholder.com/300'
+);
+SET @wk4 = SCOPE_IDENTITY();
+
+-- Guitar Basics (Music, elementary, short)
+INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+VALUES (
+    'Guitar Basics: First Chords',
+    'Learn open chords, strumming patterns, and play your first song.',
+    'Music Room - Building 2',
+    'host1',
+    'https://via.placeholder.com/150',
+    @catMusic,
+    60,
+    @lvlElem,
+    'en',
+    @maybe_host1,
+    'verified',
+    'https://via.placeholder.com/300'
+);
+SET @wk5 = SCOPE_IDENTITY();
+
+-- Sourdough Baking (Cooking, intermediate) - include mixed ticket prices and reviews
+INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+VALUES (
+    'Sourdough Baking: From Starter to Loaf',
+    'Fermentation, starter maintenance, shaping and scoring techniques.',
+    'Kitchen 3 - Culinary Center',
+    'host2',
+    'https://via.placeholder.com/150',
+    @catCooking,
+    240,
+    @lvlInter,
+    'en',
+    @maybe_host2,
+    'verified',
+    'https://via.placeholder.com/300'
+);
+SET @wk6 = SCOPE_IDENTITY();
+
+-- UX Design Crash (Design, intermediate) - will have schedules but NO tickets to test exclusion
+INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+VALUES (
+    'UX Design Crash Course',
+    'Rapid introduction into user research, wireframes and prototyping.',
+    'Room C - Building 3',
+    'host1',
+    'https://via.placeholder.com/150',
+    @catDesign,
+    120,
+    @lvlInter,
+    'en',
+    @maybe_host1,
+    'verified',
+    'https://via.placeholder.com/300'
+);
+SET @wk7 = SCOPE_IDENTITY();
+
+-- Night Photography Advanced (Photography, advanced) - different language to test language field
+INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+VALUES (
+    'Night Photography: Advanced Techniques',
+    'Long exposure, star trails, and light painting.',
+    'Outdoor Terrace - Photography Wing',
+    'host2',
+    'https://via.placeholder.com/150',
+    @catPhoto,
+    150,
+    @lvlAdv,
+    'en',
+    @maybe_host2,
+    'verified',
+    'https://via.placeholder.com/300'
+);
+SET @wk8 = SCOPE_IDENTITY();
+
+-- Draft / awaiting workshop (should be excluded by status)
+INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+VALUES (
+    'Cooking: Seasonal Salads (Draft)',
+    'Draft workshop not yet visible publicly.',
+    'Kitchen 1 - Culinary Center',
+    'host1',
+    'https://via.placeholder.com/150',
+    @catCooking,
+    45,
+    @lvlElem,
+    'en',
+    @maybe_host1,
+    'draft',
+    'https://via.placeholder.com/300'
+);
+SET @wk9 = SCOPE_IDENTITY();
+
+-- Create schedules for the new workshops
+-- Keep StartOn > GETDATE() to satisfy constraint ck_workshopschedule_time
+
+DECLARE
+    @s3_1 INT, @s3_2 INT,
+    @s4_1 INT,
+    @s5_1 INT,
+    @s6_1 INT, @s6_2 INT,
+    @s7_1 INT,
+    @s8_1 INT;
+
+-- Advanced ASP.NET Performance schedules (one near, one far) -> multiple tickets (prices differ)
+INSERT INTO WorkshopSchedules (WorkshopId, StartOn, CreatedFromRepeat)
+VALUES (@wk3, CAST(DATEADD(day, 2, GETDATE()) AS date), 0);
+SET @s3_1 = SCOPE_IDENTITY();
+
+INSERT INTO WorkshopSchedules (WorkshopId, StartOn, CreatedFromRepeat)
+VALUES (@wk3, CAST(DATEADD(day, 40, GETDATE()) AS date), 0);
+SET @s3_2 = SCOPE_IDENTITY();
+
+-- Watercolor schedule
+INSERT INTO WorkshopSchedules (WorkshopId, StartOn, CreatedFromRepeat)
+VALUES (@wk4, CAST(DATEADD(day, 5, GETDATE()) AS date), 0);
+SET @s4_1 = SCOPE_IDENTITY();
+
+-- Guitar Basics schedule within 1 day
+INSERT INTO WorkshopSchedules (WorkshopId, StartOn, CreatedFromRepeat)
+VALUES (@wk5, CAST(DATEADD(day, 1, GETDATE()) AS date), 0);
+SET @s5_1 = SCOPE_IDENTITY();
+
+-- Sourdough Baking schedules: one soon, one later
+INSERT INTO WorkshopSchedules (WorkshopId, StartOn, CreatedFromRepeat)
+VALUES (@wk6, CAST(DATEADD(day, 7, GETDATE()) AS date), 0);
+SET @s6_1 = SCOPE_IDENTITY();
+
+INSERT INTO WorkshopSchedules (WorkshopId, StartOn, CreatedFromRepeat)
+VALUES (@wk6, CAST(DATEADD(day, 20, GETDATE()) AS date), 0);
+SET @s6_2 = SCOPE_IDENTITY();
+
+-- UX Design Crash: schedule exists but we will not add tickets (to test exclusion)
+INSERT INTO WorkshopSchedules (WorkshopId, StartOn, CreatedFromRepeat)
+VALUES (@wk7, CAST(DATEADD(day, 3, GETDATE()) AS date), 0);
+SET @s7_1 = SCOPE_IDENTITY();
+
+-- Night Photography schedule
+INSERT INTO WorkshopSchedules (WorkshopId, StartOn, CreatedFromRepeat)
+VALUES (@wk8, CAST(DATEADD(day, 14, GETDATE()) AS date), 0);
+SET @s8_1 = SCOPE_IDENTITY();
+
+-- Insert tickets with varied prices and ticket types
+DECLARE
+    @t_w3_s1_ticket1 INT, @t_w3_s1_ticket2 INT,
+    @t_w3_s2_ticket1 INT,
+    @t_w4_s1_morning INT,
+    @t_w5_s1_morning INT,
+    @t_w6_s1_full INT, @t_w6_s2_half INT,
+    @t_w8_s1_evening INT;
+
+-- Advanced ASP.NET Performance (s3_1) tickets
+INSERT INTO WorkshopTickets (TicketType, StartTime, EndTime, WorkshopScheduleId, MaxTickets, Price)
+VALUES ('full', '09:00:00', '17:00:00', @s3_1, 30, 121000.00);
+SET @t_w3_s1_ticket1 = SCOPE_IDENTITY();
+
+INSERT INTO WorkshopTickets (TicketType, StartTime, EndTime, WorkshopScheduleId, MaxTickets, Price)
+VALUES ('student', '09:00:00', '17:00:00', @s3_1, 10, 300000.00);
+SET @t_w3_s1_ticket2 = SCOPE_IDENTITY();
+
+-- Advanced ASP.NET Performance (s3_2) single cheaper remote ticket
+INSERT INTO WorkshopTickets (TicketType, StartTime, EndTime, WorkshopScheduleId, MaxTickets, Price)
+VALUES ('remote', '10:00:00', '15:00:00', @s3_2, 100, 500000.00);
+SET @t_w3_s2_ticket1 = SCOPE_IDENTITY();
+
+-- Watercolor (s4_1)
+INSERT INTO WorkshopTickets (TicketType, StartTime, EndTime, WorkshopScheduleId, MaxTickets, Price)
+VALUES ('half', '10:00:00', '12:30:00', @s4_1, 12, 550000.00);
+SET @t_w4_s1_morning = SCOPE_IDENTITY();
+
+-- Guitar Basics (s5_1)
+INSERT INTO WorkshopTickets (TicketType, StartTime, EndTime, WorkshopScheduleId, MaxTickets, Price)
+VALUES ('morning', '10:00:00', '11:30:00', @s5_1, 8, 280000.00);
+SET @t_w5_s1_morning = SCOPE_IDENTITY();
+
+-- Sourdough Baking (two schedules with different price tiers)
+INSERT INTO WorkshopTickets (TicketType, StartTime, EndTime, WorkshopScheduleId, MaxTickets, Price)
+VALUES ('full', '09:00:00', '16:00:00', @s6_1, 15, 150000.00);
+SET @t_w6_s1_full = SCOPE_IDENTITY();
+
+INSERT INTO WorkshopTickets (TicketType, StartTime, EndTime, WorkshopScheduleId, MaxTickets, Price)
+VALUES ('short', '10:00:00', '13:00:00', @s6_2, 20, 800000.00);
+SET @t_w6_s2_half = SCOPE_IDENTITY();
+
+-- Night Photography (evening)
+INSERT INTO WorkshopTickets (TicketType, StartTime, EndTime, WorkshopScheduleId, MaxTickets, Price)
+VALUES ('evening', '20:00:00', '23:00:00', @s8_1, 12, 123000.00);
+SET @t_w8_s1_evening = SCOPE_IDENTITY();
+
+-- NOTE: UX Design Crash (@wk7) intentionally has a schedule but NO tickets inserted so it will be excluded by search initial WHERE
+
+-- Add workshop images for variety
+INSERT INTO WorkshopImages (WorkshopId, ImgLink) VALUES (@wk3, 'https://via.placeholder.com/400');
+INSERT INTO WorkshopImages (WorkshopId, ImgLink) VALUES (@wk4, 'https://via.placeholder.com/400');
+INSERT INTO WorkshopImages (WorkshopId, ImgLink) VALUES (@wk5, 'https://via.placeholder.com/400');
+INSERT INTO WorkshopImages (WorkshopId, ImgLink) VALUES (@wk6, 'https://via.placeholder.com/400');
+INSERT INTO WorkshopImages (WorkshopId, ImgLink) VALUES (@wk8, 'https://via.placeholder.com/400');
+
+-- Add reviews to test Rating sort (ratings are ints; average will be used)
+INSERT INTO WorkshopReviews (WorkshopId, UserId, Title, Description, Rating)
+VALUES (@wk3, @maybe_user1, 'Excellent deep-dive', 'Detailed and practical profiling tips.', 5);
+
+INSERT INTO WorkshopReviews (WorkshopId, UserId, Title, Description, Rating)
+VALUES (@wk3, @maybe_user2, 'Very technical', 'Great content but intense for some.', 4);
+
+INSERT INTO WorkshopReviews (WorkshopId, UserId, Title, Description, Rating)
+VALUES (@wk4, @maybe_user1, 'Lovely session', 'Perfect for beginners.', 4);
+
+INSERT INTO WorkshopReviews (WorkshopId, UserId, Title, Description, Rating)
+VALUES (@wk6, @maybe_user2, 'Amazing bread', 'Hands-on and tasty results.', 5);
+
+-- Add likes (WorkshopLikes) to test inclusion of Users navigation if needed in UI
+INSERT INTO WorkshopLikes (UserId, WorkshopId) VALUES (@maybe_user1, @wk3);
+INSERT INTO WorkshopLikes (UserId, WorkshopId) VALUES (@maybe_user2, @wk6);
+INSERT INTO WorkshopLikes (UserId, WorkshopId) VALUES (@maybe_user1, @wk4);
+
+-- Add participants and payments to create more realistic dataset
+INSERT INTO WorkshopParticipants (ParticipantId, TicketId, Status)
+VALUES (@maybe_user1, @t_w3_s1_ticket1, 'paid');
+
+INSERT INTO Payments (ParticipantId, TicketId, Amount, Status)
+VALUES (@maybe_user1, @t_w3_s1_ticket1, 120000.00, 'success');
+
+INSERT INTO WorkshopParticipants (ParticipantId, TicketId, Status)
+VALUES (@maybe_user2, @t_w6_s1_full, 'paid');
+
+INSERT INTO Payments (ParticipantId, TicketId, Amount, Status)
+VALUES (@maybe_user2, @t_w6_s1_full, 150000.00, 'success');
 
 GO

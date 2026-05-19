@@ -26,6 +26,8 @@ public partial class ExeContext : DbContext
 
     public virtual DbSet<WorkshopImage> WorkshopImages { get; set; }
 
+    public virtual DbSet<WorkshopLevel> WorkshopLevels { get; set; }
+
     public virtual DbSet<WorkshopParticipant> WorkshopParticipants { get; set; }
 
     public virtual DbSet<WorkshopReview> WorkshopReviews { get; set; }
@@ -43,7 +45,7 @@ public partial class ExeContext : DbContext
     {
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Payments__3214EC0794C0E6BB");
+            entity.HasKey(e => e.Id).HasName("PK__Payments__3214EC079F332528");
 
             entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.CreatedOn)
@@ -62,9 +64,9 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Users__3214EC0761DC1786");
+            entity.HasKey(e => e.Id).HasName("PK__Users__3214EC071B9E811E");
 
-            entity.HasIndex(e => e.Email, "UQ__Users__A9D105345CC8C482").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Users__A9D1053476910D5D").IsUnique();
 
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("(getdate())")
@@ -107,7 +109,7 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<Workshop>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC079E58A8A5");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC0787B2C591");
 
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("(getdate())")
@@ -120,10 +122,6 @@ public partial class ExeContext : DbContext
                 .HasMaxLength(2)
                 .IsUnicode(false)
                 .HasDefaultValue("en");
-            entity.Property(e => e.Level)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("elementary");
             entity.Property(e => e.Location).HasMaxLength(256);
             entity.Property(e => e.Status)
                 .HasMaxLength(10)
@@ -143,18 +141,23 @@ public partial class ExeContext : DbContext
                 .HasForeignKey(d => d.CreatedBy)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_workshop_user");
+
+            entity.HasOne(d => d.Level).WithMany(p => p.Workshops)
+                .HasForeignKey(d => d.LevelId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_workshop_level");
         });
 
         modelBuilder.Entity<WorkshopCategory>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC078E1CFF63");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC076B12AAC8");
 
             entity.Property(e => e.Name).HasMaxLength(100);
         });
 
         modelBuilder.Entity<WorkshopImage>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC07C4AAB34D");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC07913F5710");
 
             entity.Property(e => e.ImgLink)
                 .HasMaxLength(256)
@@ -164,6 +167,15 @@ public partial class ExeContext : DbContext
                 .HasForeignKey(d => d.WorkshopId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_workshopimage_workshop");
+        });
+
+        modelBuilder.Entity<WorkshopLevel>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC0788C00C77");
+
+            entity.Property(e => e.Name)
+                .HasMaxLength(20)
+                .IsUnicode(false);
         });
 
         modelBuilder.Entity<WorkshopParticipant>(entity =>
@@ -191,7 +203,7 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<WorkshopReview>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC0784B86D21");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC070570230E");
 
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("(getdate())")
@@ -211,7 +223,7 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<WorkshopSchedule>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC07F84A271B");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC076296B399");
 
             entity.HasOne(d => d.Workshop).WithMany(p => p.WorkshopSchedules)
                 .HasForeignKey(d => d.WorkshopId)
@@ -221,7 +233,7 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<WorkshopScheduleConfig>(entity =>
         {
-            entity.HasKey(e => e.WorkshopId).HasName("PK__Workshop__7A008C0AE9DD5D31");
+            entity.HasKey(e => e.WorkshopId).HasName("PK__Workshop__7A008C0A749FA569");
 
             entity.ToTable("WorkshopScheduleConfig");
 
@@ -242,7 +254,7 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<WorkshopTicket>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC0710B81BA6");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC074AA02593");
 
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.TicketType)

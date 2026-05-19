@@ -23,7 +23,7 @@ public partial class Workshop
 
     public int Duration { get; set; }
 
-    public string Level { get; set; } = null!;
+    public int LevelId { get; set; }
 
     public string Language { get; set; } = null!;
 
@@ -36,6 +36,8 @@ public partial class Workshop
     public virtual WorkshopCategory Category { get; set; } = null!;
 
     public virtual User CreatedByNavigation { get; set; } = null!;
+
+    public virtual WorkshopLevel Level { get; set; } = null!;
 
     public virtual ICollection<WorkshopImage> WorkshopImages { get; set; } = new List<WorkshopImage>();
 
