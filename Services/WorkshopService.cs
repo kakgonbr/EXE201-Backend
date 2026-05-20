@@ -41,13 +41,6 @@ namespace EXE201_Backend.Services
             return _mapper.Map<WorkshopDetailsDto>(workshop);
         }
 
-        public async Task<WorkshopScheduleDetailsDto?> GetScheduleDetailsAsync(int id, CancellationToken cancellationToken = default)
-        {
-            var scheduleDetails = await _workshopScheduleRepository.GetByIdAsync(id, cancellationToken);
-            if (scheduleDetails == null) return null;
-            return _mapper.Map<WorkshopScheduleDetailsDto>(scheduleDetails);
-        }
-
         public async Task<PagedResult<WorkshopDisplayDto>> GetWorkshopAsync(
             string? query = null,
             IEnumerable<string>? locations = null,
