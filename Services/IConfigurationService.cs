@@ -21,5 +21,10 @@
         string SMTP_FROM { get; set; }
         string SELF_SCHEME { get; set; }
         string SELF_HOST { get; set; }
+        int SERVICE_COST_PERCENTAGE { get; set; }
+        int PAYMENT_EXPIRE_SEC { get; set; }
+        string SE_RETURN { get; set; }
+        string SE_ERROR { get; set; }
+        string SE_CANCEL { get; set; }
     }
 }

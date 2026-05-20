@@ -11,10 +11,12 @@ namespace EXE201_Backend.Controllers
     public class WorkshopController : ControllerBase
     {
         private readonly IWorkshopService _workshopService;
+        private readonly IScheduleService _scheduleService;
 
-        public WorkshopController(IWorkshopService workshopService)
+        public WorkshopController(IWorkshopService workshopService, IScheduleService scheduleService)
         {
             _workshopService = workshopService;
+            _scheduleService = scheduleService;
         }
 
         [Authorize]
@@ -60,7 +62,7 @@ namespace EXE201_Backend.Controllers
         [HttpGet("schedule/{id}")]
         public async Task<IActionResult> GetScheduleDetails(int id, CancellationToken cancellationToken = default)
         {
-            var result = await _workshopService.GetScheduleDetailsAsync(id, cancellationToken);
+            var result = await _scheduleService.GetScheduleDetailsAsync(id, cancellationToken);
             if (result == null)
             {
                 return NotFound();
