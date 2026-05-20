@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using EXE201_Backend.Models;
+using EXE201_Backend.Models.Responses;
 
 namespace EXE201_Backend.Extensions
 {

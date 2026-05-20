@@ -7,8 +7,6 @@ public partial class Workshop
 {
     public int Id { get; set; }
 
-    public double Rating { get; set; }
-
     public string? ThumbnailLink { get; set; }
 
     public string Title { get; set; } = null!;
@@ -21,9 +19,13 @@ public partial class Workshop
 
     public string? InstructorImgLink { get; set; }
 
-    public decimal Price { get; set; }
-
     public int CategoryId { get; set; }
+
+    public int Duration { get; set; }
+
+    public int LevelId { get; set; }
+
+    public string Language { get; set; } = null!;
 
     public int CreatedBy { get; set; }
 
@@ -34,6 +36,8 @@ public partial class Workshop
     public virtual WorkshopCategory Category { get; set; } = null!;
 
     public virtual User CreatedByNavigation { get; set; } = null!;
+
+    public virtual WorkshopLevel Level { get; set; } = null!;
 
     public virtual ICollection<WorkshopImage> WorkshopImages { get; set; } = new List<WorkshopImage>();
 

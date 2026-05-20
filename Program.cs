@@ -1,6 +1,7 @@
 using EXE201_Backend.Data;
 using EXE201_Backend.Repositories;
 using EXE201_Backend.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -48,19 +49,44 @@ namespace EXE201_Backend
             };
 
             builder.Services
-                .AddScoped<IUserRepository, UserRepository>()
+                .AddSingleton<ITimeProvider, TimeMachine>()
                 .AddSingleton<IConfigurationService, ConfigurationService>()
+                .AddScoped<IUserRepository, UserRepository>()
                 .AddScoped<IImageService, ImageService>()
                 .AddScoped<IUserService, UserService>()
                 .AddScoped<IMailService, MailService>()
                 .AddScoped<IAuthService, AuthService>()
-                .AddSingleton<ITimeProvider, TimeMachine>();
+                .AddScoped<IWorkshopRepository, WorkshopRepository>()
+                .AddScoped<IWorkshopService, WorkshopService>()
+                .AddScoped<IWorkshopScheduleRepository, WorkshopScheduleRepository>();
 
             builder.Services.AddControllers().AddJsonOptions(o =>
             {
                 o.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             });
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = tokenValidationParameters;
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = ctx =>
+                    {
+                        if (ctx.Request.Query.TryGetValue("access_token", out var t))
+                            ctx.Token = t;
+                        return Task.CompletedTask;
+                    },
+                };
+            });
+
+            builder.Services.AddAuthorization();
 
             var app = builder.Build();
 
@@ -74,6 +100,7 @@ namespace EXE201_Backend
 
             app.UseCors("FrontendPolicy");
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();

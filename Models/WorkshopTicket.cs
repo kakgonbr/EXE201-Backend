@@ -9,9 +9,15 @@ public partial class WorkshopTicket
 
     public string TicketType { get; set; } = null!;
 
+    public TimeOnly StartTime { get; set; }
+
+    public TimeOnly EndTime { get; set; }
+
     public int WorkshopScheduleId { get; set; }
 
     public int MaxTickets { get; set; }
+
+    public decimal Price { get; set; }
 
     public virtual ICollection<WorkshopParticipant> WorkshopParticipants { get; set; } = new List<WorkshopParticipant>();
 
