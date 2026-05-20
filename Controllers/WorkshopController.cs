@@ -1,6 +1,6 @@
-﻿using EXE201_Backend.Models.Requests;
-using EXE201_Backend.Repositories;
+﻿using EXE201_Backend.Repositories;
 using EXE201_Backend.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -15,6 +15,57 @@ namespace EXE201_Backend.Controllers
         public WorkshopController(IWorkshopService workshopService)
         {
             _workshopService = workshopService;
+        }
+
+        [Authorize]
+        [AllowAnonymous]
+        [HttpGet("recommendations")]
+        public async Task<IActionResult> GetRecommendedWorkshops(CancellationToken cancellationToken = default)
+        {
+            int? userId;
+            if (int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var parsedUserId))
+            {
+                userId = parsedUserId;
+            }
+            else
+            {
+                userId = null;
+            }
+            var result = await _workshopService.GetRecommendedWorkshopsAsync(userId, cancellationToken);
+            return Ok(result);
+        }
+
+        [Authorize]
+        [AllowAnonymous]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetWorkshopById(int id, CancellationToken cancellationToken = default)
+        {
+            int? userId;
+            if (int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var parsedUserId))
+            {
+                userId = parsedUserId;
+            }
+            else
+            {
+                userId = null;
+            }
+            var result = await _workshopService.GetWorkshopByIdAsync(id, userId, cancellationToken);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
+        }
+
+        [HttpGet("schedule/{id}")]
+        public async Task<IActionResult> GetScheduleDetails(int id, CancellationToken cancellationToken = default)
+        {
+            var result = await _workshopService.GetScheduleDetailsAsync(id, cancellationToken);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
         }
 
         [HttpGet("search")]

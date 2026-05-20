@@ -28,10 +28,18 @@ namespace EXE201_Backend.Repositories
             _timeProvider = timeProvider;
         }
 
-        public async Task<Workshop?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<Workshop?> GetByIdAsync(int id, int? userId, CancellationToken cancellationToken = default)
         {
             return await _db.Workshops
-                .SingleOrDefaultAsync(u => u.Id == id, cancellationToken);
+                .Include(w => w.Category)
+                .Include(w => w.Level)
+                .Include(w => w.WorkshopReviews!)
+                .Include(w => w.WorkshopImages!)
+                .Include(w => w.WorkshopSchedules!)
+                    .ThenInclude(ws => ws.WorkshopTickets)
+                        .ThenInclude(wt => wt.WorkshopParticipants)
+                .Include(w => w.Users.Where(u => u.Id == userId))
+                .SingleOrDefaultAsync(w => w.Id == id, cancellationToken);
         }
 
         public async Task AddAsync(Workshop workshop, CancellationToken cancellationToken = default)
@@ -48,7 +56,7 @@ namespace EXE201_Backend.Repositories
 
         public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            var workshop = await GetByIdAsync(id, cancellationToken);
+            var workshop = await GetByIdAsync(id, null, cancellationToken);
             if (workshop != null)
             {
                 _db.Workshops.Remove(workshop);
@@ -56,7 +64,7 @@ namespace EXE201_Backend.Repositories
             }
         }
 
-        public async Task<List<Workshop>> GetAllAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Workshop>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             return await _db.Workshops.ToListAsync(cancellationToken);
         }
@@ -64,6 +72,62 @@ namespace EXE201_Backend.Repositories
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
         {
             return await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<Workshop>> GetRecommendationsAsync(int? userId, CancellationToken cancellationToken = default)
+        {
+            var user = userId == null ? null : await _db.Users
+                .Include(u => u.WorkshopParticipants.Where(wp => wp.Status == "paid"))
+                    .ThenInclude(wp => wp.Ticket)
+                        .ThenInclude(wp => wp.WorkshopSchedule)
+                            .ThenInclude(ws => ws.Workshop)
+                                .ThenInclude(w => w.Category)
+                .Include(u => u.WorkshopParticipants.Where(wp => wp.Status == "paid"))
+                    .ThenInclude(wp => wp.Ticket)
+                        .ThenInclude(wp => wp.WorkshopSchedule)
+                            .ThenInclude(ws => ws.Workshop)
+                                .ThenInclude(w => w.Level)
+                .SingleOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+            IQueryable<Workshop> randomWorkshops = _db.Workshops
+                .Where(w => w.Status == "verified"
+                    && w.WorkshopSchedules.Count != 0
+                    && w.WorkshopSchedules.Any(ws => ws.StartOn > DateOnly.FromDateTime(_timeProvider.Now) && ws.WorkshopTickets.Count != 0))
+                .Include(w => w.Category)
+                .Include(w => w.Level)
+                .Include(w => w.WorkshopReviews!)
+                .Include(w => w.WorkshopImages!)
+                .Include(w => w.WorkshopSchedules!)
+                .OrderBy(r => Guid.NewGuid())
+                .Take(4);
+
+            if (user == null || user.WorkshopParticipants == null || user.WorkshopParticipants.Count == 0)
+            {
+                return await randomWorkshops.ToListAsync(cancellationToken);
+            }
+
+            var preferredCategories = user.WorkshopParticipants.Select(wp => wp.Ticket.WorkshopSchedule.Workshop.Category.Name).Distinct().ToList();
+            var preferredLevels = user.WorkshopParticipants.Select(wp => wp.Ticket.WorkshopSchedule.Workshop.Level.Name).Distinct().ToList();
+            IQueryable<Workshop> recommendations = _db.Workshops
+                .Where(w => w.Status == "verified"
+                    && w.WorkshopSchedules.Count != 0
+                    && w.WorkshopSchedules.Any(ws => ws.StartOn > DateOnly.FromDateTime(_timeProvider.Now) && ws.WorkshopTickets.Count != 0)
+                    && (preferredCategories.Contains(w.Category.Name) || preferredLevels.Contains(w.Level.Name))
+                    && !w.Users.Any(u => u.Id == userId))
+                .Include(w => w.Category)
+                .Include(w => w.Level)
+                .Include(w => w.Users.Where(u => u.Id == userId))
+                .Include(w => w.WorkshopReviews!)
+                .Include(w => w.WorkshopImages!)
+                .Include(w => w.WorkshopSchedules!)
+                .Take(4);
+
+            if (!recommendations.Any())
+            {
+                return await randomWorkshops.ToListAsync(cancellationToken);
+            }
+
+            return await recommendations.ToListAsync(cancellationToken);
         }
 
         public async Task<PagedResult<Workshop>> SearchAsync(
@@ -175,7 +239,7 @@ namespace EXE201_Backend.Repositories
                     .ThenInclude(s => s.WorkshopTickets!);
             }
 
-                sortBy ??= WorkshopSort.Relevance;
+            sortBy ??= WorkshopSort.Relevance;
 
             switch (sortBy.Value)
             {

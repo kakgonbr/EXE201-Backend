@@ -41,7 +41,7 @@ namespace EXE201_Backend.Repositories
 
         public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            var user = await GetByIdAsync(id);
+            var user = await GetByIdAsync(id, cancellationToken);
             if (user != null)
             {
                 _db.Users.Remove(user);
