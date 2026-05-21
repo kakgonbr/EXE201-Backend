@@ -18,6 +18,12 @@ namespace EXE201_Backend.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Register also triggers otp resend, same delay and constraints apply, but also resets the password.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] AuthRequest request, CancellationToken cancellationToken = default)
         {
@@ -69,6 +75,26 @@ namespace EXE201_Backend.Controllers
             else
             {
                 return Unauthorized("Login failed. Please check your email and password.");
+            }
+        }
+
+        [HttpGet("resend")]
+        public async Task<IActionResult> ResendOtp([FromQuery] string email, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return BadRequest("Email is required.");
+            }
+
+            bool success = await _authService.ResendOtp(email, cancellationToken);
+
+            if (success)
+            {
+                return Ok("OTP resent. Please check your email.");
+            }
+            else
+            {
+                return BadRequest("OTP resend failed. Please ensure you are not requesting OTP too frequently and that the email is correct.");
             }
         }
     }

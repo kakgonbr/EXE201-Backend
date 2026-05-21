@@ -170,6 +170,7 @@ CREATE TABLE WorkshopReviews
 INSERT INTO Users
 (Email, PhoneNumber, PasswordHash, Role, Name, Verified, IsActive, GoogleUserId)
 VALUES
+('staff1@example.com', '', 'AQAAAAIAAYagAAAAEC+EIwIzuiMSML2WhOWrh4RXtiohR0R6er4bsOUj1LKoNLrk4iRoSc6ah3qLgBcHtQ==', 'staff', 'staff1', 1, 1, ''),
 ('user1@example.com', '', 'AQAAAAIAAYagAAAAEC+EIwIzuiMSML2WhOWrh4RXtiohR0R6er4bsOUj1LKoNLrk4iRoSc6ah3qLgBcHtQ==', 'user', 'user1', 1, 1, ''),
 ('user2@example.com', '', 'AQAAAAIAAYagAAAAEC+EIwIzuiMSML2WhOWrh4RXtiohR0R6er4bsOUj1LKoNLrk4iRoSc6ah3qLgBcHtQ==', 'user', 'user2', 1, 1, ''),
 ('host1@example.com', '', 'AQAAAAIAAYagAAAAEC+EIwIzuiMSML2WhOWrh4RXtiohR0R6er4bsOUj1LKoNLrk4iRoSc6ah3qLgBcHtQ==', 'host', 'host1', 1, 1, ''),
