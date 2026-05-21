@@ -113,7 +113,7 @@ namespace EXE201_Backend.Models.Dto
         public TransactionType TransactionType { get; set; }
 
         [JsonPropertyName("transaction_date")]
-        public DateTime TransactionDate { get; set; }
+        public string TransactionDate { get; set; } = default!;
 
         [JsonPropertyName("transaction_status")]
         public TransactionStatus TransactionStatus { get; set; }

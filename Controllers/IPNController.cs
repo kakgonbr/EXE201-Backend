@@ -20,7 +20,7 @@ namespace EXE201_Backend.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> HandleIPN([FromBody] PaymentWebhookDto paymentWebhook, CancellationToken cancellationToken)
+        public async Task<IActionResult> HandleIPN([FromBody] PaymentWebhookDto paymentWebhook, CancellationToken cancellationToken = default)
         {
             var apiKey = Request.Headers["X-Secret-Key"].FirstOrDefault();
 

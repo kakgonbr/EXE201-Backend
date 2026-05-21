@@ -6,6 +6,7 @@ namespace EXE201_Backend.Services
     {
         Task<WorkshopScheduleDetailsDto> GetScheduleDetailsAsync(int scheduleId, CancellationToken cancellationToken = default);
         Task<IEnumerable<WorkshopScheduleDto>> GetSchedulesInMonthAsync(int userId, int month, CancellationToken cancellationToken = default);
+        Task<PagedResultDto<WorkshopScheduleDetailsDto>> GetUpcoming(int userId, int page, int pageSize, CancellationToken cancellationToken = default);
         Task<bool> IsUserOccupiedAsync(int userId, int ticketId, CancellationToken cancellationToken = default);
     }
 }

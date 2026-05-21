@@ -25,7 +25,7 @@ namespace EXE201_Backend.Controllers
 
         [Authorize]
         [HttpGet("proceed/{ticketId}")]
-        public async Task<IActionResult> ProceedPayment(int ticketId, CancellationToken cancellationToken)
+        public async Task<IActionResult> ProceedPayment(int ticketId, CancellationToken cancellationToken = default)
         {
             int userId;
             if (int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var parsedUserId))
@@ -54,7 +54,7 @@ namespace EXE201_Backend.Controllers
 
 
         [HttpGet("status/{invoiceNumber}")]
-        public async Task<IActionResult> PaymentStatus(string invoiceNumber, CancellationToken cancellationToken)
+        public async Task<IActionResult> PaymentStatus(string invoiceNumber, CancellationToken cancellationToken = default)
         {
             string[] invoiceIds = invoiceNumber.Split('_');
 

@@ -99,5 +99,22 @@ namespace EXE201_Backend.Repositories
                 && ws.WorkshopTickets.Any(wt => wt.WorkshopParticipants.Any(wp => wp.ParticipantId == userId && wp.Status == "paid")),
                 cancellationToken);
         }
+
+        public async Task<PagedResultDto<WorkshopSchedule>> GetUpcoming(int userId, int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            var today = DateOnly.FromDateTime(_timeProvider.Now);
+            return await _db.WorkshopSchedules
+                .Include(ws => ws.Workshop)
+                    .ThenInclude(w => w.Category)
+                .Include(ws => ws.Workshop)
+                    .ThenInclude(w => w.Level)
+                .Include(ws => ws.WorkshopTickets)
+                    .ThenInclude(wt => wt.WorkshopParticipants)
+                .Where(ws =>
+                    ws.StartOn >= today
+                    && ws.WorkshopTickets.Any(wt => wt.WorkshopParticipants.Any(wp => wp.ParticipantId == userId && wp.Status == "paid")))
+                .OrderBy(ws => ws.StartOn)
+                .ToPagedResultAsync(page, pageSize, cancellationToken);
+        }
     }
 }
