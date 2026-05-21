@@ -1,5 +1,5 @@
 ﻿using EXE201_Backend.Models;
-using EXE201_Backend.Models.Responses;
+using EXE201_Backend.Models.Dto;
 
 namespace EXE201_Backend.Repositories
 {
@@ -8,7 +8,7 @@ namespace EXE201_Backend.Repositories
         Task AddAsync(WorkshopSchedule schedule, CancellationToken cancellationToken = default);
         Task DeleteAsync(int id, CancellationToken cancellationToken = default);
         Task<IEnumerable<WorkshopSchedule>> GetAllAsync(CancellationToken cancellationToken = default);
-        Task<PagedResult<WorkshopSchedule>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default);
+        Task<PagedResultDto<WorkshopSchedule>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default);
         Task<WorkshopSchedule?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<IEnumerable<WorkshopSchedule>> GetSchedulesInMonthAsync(int userId, int month, CancellationToken cancellationToken = default);
         Task<bool> IsUserOccupiedAsync(int userId, int ticketId, CancellationToken cancellationToken = default);

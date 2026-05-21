@@ -61,6 +61,7 @@ namespace EXE201_Backend
                 .AddScoped<IWorkshopScheduleRepository, WorkshopScheduleRepository>()
                 .AddScoped<IWorkshopParticipantRepository, WorkshopParticipantRepository>()
                 .AddScoped<IWorkshopTicketRepository, WorkshopTicketRepository>()
+                .AddScoped<IPaymentRepository, PaymentRepository>()
                 .AddScoped<IPaymentService, PaymentService>()
                 .AddScoped<IScheduleService, ScheduleService>();
 

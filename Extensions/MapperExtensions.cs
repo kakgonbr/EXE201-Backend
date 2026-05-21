@@ -1,13 +1,13 @@
 ﻿using AutoMapper;
-using EXE201_Backend.Models.Responses;
+using EXE201_Backend.Models.Dto;
 
 namespace EXE201_Backend.Extensions
 {
     public static class MapperExtensions
     {
-        public static PagedResult<TDestination> MapPagedResult<TSource, TDestination>(
+        public static PagedResultDto<TDestination> MapPagedResult<TSource, TDestination>(
             this IMapper mapper,
-            PagedResult<TSource> source)
+            PagedResultDto<TSource> source)
         {
             ArgumentNullException.ThrowIfNull(mapper);
             ArgumentNullException.ThrowIfNull(source);

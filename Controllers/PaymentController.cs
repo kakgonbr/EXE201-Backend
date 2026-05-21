@@ -51,5 +51,36 @@ namespace EXE201_Backend.Controllers
 
             return Ok(result);
         }
+
+
+        [HttpGet("status/{invoiceNumber}")]
+        public async Task<IActionResult> PaymentStatus(string invoiceNumber, CancellationToken cancellationToken)
+        {
+            string[] invoiceIds = invoiceNumber.Split('_');
+
+            if (invoiceIds.Length != 4)
+            {
+                return BadRequest("Invalid invoice number format");
+            }
+
+            if (!int.TryParse(invoiceIds[1], out int userId))
+            {
+                return BadRequest("Invalid user ID in invoice number");
+            }
+
+            if (!int.TryParse(invoiceIds[2], out int ticketId))
+            {
+                return BadRequest("Invalid ticket ID in invoice number");
+            }
+
+            var status = await _paymentService.GetPaymentStatusAsync(userId, ticketId, cancellationToken);
+
+            if (status == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new { status });
+        }
     }
 }

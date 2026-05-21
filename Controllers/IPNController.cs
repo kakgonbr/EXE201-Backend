@@ -1,6 +1,6 @@
-﻿using EXE201_Backend.Services;
+﻿using EXE201_Backend.Models.Dto;
+using EXE201_Backend.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Text;
 
 namespace EXE201_Backend.Controllers
 {
@@ -11,36 +11,52 @@ namespace EXE201_Backend.Controllers
         private readonly ILogger<IPNController> _logger;
         private readonly IConfigurationService _configurationService;
 
-        public IPNController(ILogger<IPNController> logger, IConfigurationService configurationService)
+        private readonly IPaymentService _paymentService;
+        public IPNController(ILogger<IPNController> logger, IConfigurationService configurationService, IPaymentService paymentService)
         {
             _logger = logger;
             _configurationService = configurationService;
+            _paymentService = paymentService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> HandleIPN()
+        public async Task<IActionResult> HandleIPN([FromBody] PaymentWebhookDto paymentWebhook, CancellationToken cancellationToken)
         {
             var apiKey = Request.Headers["X-Secret-Key"].FirstOrDefault();
 
             if (string.IsNullOrEmpty(apiKey))
             {
-                return BadRequest("Missing X-Secret-Key");
+                return Unauthorized("Missing X-Secret-Key");
             }
 
-            _logger.LogInformation("Received IPN request with API key: {ApiKey}", apiKey);
+            if (apiKey != _configurationService.SE_SECRET)
+            {
+                return Unauthorized("Invalid secret");
+            }
 
-            Request.EnableBuffering();
+            string invoiceNum = paymentWebhook.Order.OrderInvoiceNumber;
 
-            using var reader = new StreamReader(
-                Request.Body,
-                Encoding.UTF8,
-                leaveOpen: true);
+            string[] invoiceIds = invoiceNum.Split('_');
 
-            var body = await reader.ReadToEndAsync();
+            if (invoiceIds.Length != 4)
+            {
+                return BadRequest("Invalid invoice number format");
+            }
 
-            Request.Body.Position = 0;
+            if (!int.TryParse(invoiceIds[1], out int userId))
+            {
+                return BadRequest("Invalid user ID in invoice number");
+            }
 
-            _logger.LogInformation("IPN request body: {Body}", body);
+            if (!int.TryParse(invoiceIds[2], out int ticketId))
+            {
+                return BadRequest("Invalid ticket ID in invoice number");
+            }
+
+            if (paymentWebhook.Order.OrderStatus == OrderStatus.CAPTURED)
+            {
+                await _paymentService.InformPaymentStatus(userId, ticketId, paymentWebhook.Order.OrderAmount, cancellationToken);
+            }
 
             return Ok();
         }

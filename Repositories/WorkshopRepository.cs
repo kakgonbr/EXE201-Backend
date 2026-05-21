@@ -3,7 +3,7 @@ using EXE201_Backend.Models;
 using EXE201_Backend.Extensions;
 using Microsoft.EntityFrameworkCore;
 using EXE201_Backend.Services;
-using EXE201_Backend.Models.Responses;
+using EXE201_Backend.Models.Dto;
 
 namespace EXE201_Backend.Repositories
 {
@@ -130,7 +130,7 @@ namespace EXE201_Backend.Repositories
             return await recommendations.ToListAsync(cancellationToken);
         }
 
-        public async Task<PagedResult<Workshop>> SearchAsync(
+        public async Task<PagedResultDto<Workshop>> SearchAsync(
             string? query = null,
             IEnumerable<string>? locations = null,
             IEnumerable<string>? categories = null,

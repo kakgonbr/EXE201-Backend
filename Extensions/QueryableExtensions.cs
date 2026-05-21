@@ -1,11 +1,11 @@
-﻿using EXE201_Backend.Models.Responses;
+﻿using EXE201_Backend.Models.Dto;
 using Microsoft.EntityFrameworkCore;
 
 namespace EXE201_Backend.Extensions
 {
     public static class QueryableExtensions
     {
-        public static async Task<PagedResult<T>> ToPagedResultAsync<T>(
+        public static async Task<PagedResultDto<T>> ToPagedResultAsync<T>(
             this IQueryable<T> source,
             int page,
             int pageSize,
@@ -17,14 +17,14 @@ namespace EXE201_Backend.Extensions
             var totalCount = await source.LongCountAsync(cancellationToken);
 
             if (totalCount == 0)
-                return PagedResult<T>.Empty(page, pageSize);
+                return PagedResultDto<T>.Empty(page, pageSize);
 
             var data = await source
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(cancellationToken);
 
-            return PagedResult<T>.Create(data, page, pageSize, totalCount);
+            return PagedResultDto<T>.Create(data, page, pageSize, totalCount);
         }
     }
 

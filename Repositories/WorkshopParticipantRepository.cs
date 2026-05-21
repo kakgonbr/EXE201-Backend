@@ -1,7 +1,7 @@
 ﻿using EXE201_Backend.Data;
 using EXE201_Backend.Extensions;
 using EXE201_Backend.Models;
-using EXE201_Backend.Models.Responses;
+using EXE201_Backend.Models.Dto;
 using Microsoft.EntityFrameworkCore;
 
 namespace EXE201_Backend.Repositories
@@ -22,7 +22,7 @@ namespace EXE201_Backend.Repositories
                 .Include(wp => wp.Ticket)
                     .ThenInclude(t => t.WorkshopSchedule)
                         .ThenInclude(ws => ws.Workshop)
-                .SingleOrDefaultAsync(u => u.ParticipantId == participantId && u.TicketId == ticketId, cancellationToken);
+                .SingleOrDefaultAsync(wp => wp.ParticipantId == participantId && wp.TicketId == ticketId, cancellationToken);
         }
 
         public async Task AddAsync(WorkshopParticipant participant, CancellationToken cancellationToken = default)
@@ -52,7 +52,7 @@ namespace EXE201_Backend.Repositories
             return await _db.WorkshopParticipants.ToListAsync(cancellationToken);
         }
 
-        public async Task<PagedResult<WorkshopParticipant>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<WorkshopParticipant>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default)
         {
             return await _db.WorkshopParticipants.ToPagedResultAsync(page, pageSize, cancellationToken);
         }

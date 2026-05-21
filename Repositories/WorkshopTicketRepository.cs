@@ -1,7 +1,7 @@
 ﻿using EXE201_Backend.Data;
 using EXE201_Backend.Extensions;
 using EXE201_Backend.Models;
-using EXE201_Backend.Models.Responses;
+using EXE201_Backend.Models.Dto;
 using Microsoft.EntityFrameworkCore;
 
 namespace EXE201_Backend.Repositories
@@ -48,7 +48,7 @@ namespace EXE201_Backend.Repositories
             return await _db.WorkshopTickets.ToListAsync(cancellationToken);
         }
 
-        public async Task<PagedResult<WorkshopTicket>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<WorkshopTicket>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default)
         {
             return await _db.WorkshopTickets.ToPagedResultAsync(page, pageSize, cancellationToken);
         }
