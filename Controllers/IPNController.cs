@@ -57,6 +57,10 @@ namespace EXE201_Backend.Controllers
             {
                 await _paymentService.InformPaymentStatus(userId, ticketId, paymentWebhook.Order.OrderAmount, cancellationToken);
             }
+            else
+            {
+                await _paymentService.InformPaymentStatus(userId, ticketId, 0, cancellationToken);
+            }
 
             return Ok();
         }
