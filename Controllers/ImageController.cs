@@ -8,12 +8,12 @@ namespace EXE201_Backend.Controllers
     [ApiController]
     [Route("api/[controller]")]
     //[Authorize]
-    public class ImagesController : ControllerBase
+    public class ImageController : ControllerBase
     {
-        private readonly ILogger<ImagesController> _logger;
+        private readonly ILogger<ImageController> _logger;
         private readonly IImageService _imageService;
 
-        public ImagesController(ILogger<ImagesController> logger, IImageService imageService)
+        public ImageController(ILogger<ImageController> logger, IImageService imageService)
         {
             _logger = logger;
             _imageService = imageService;
@@ -21,9 +21,9 @@ namespace EXE201_Backend.Controllers
 
         [Authorize(Roles = "staff")]
         [HttpPost("staff")]
-        public async Task<IActionResult> StaffUpload([FromForm] IFormFile file)
+        public async Task<IActionResult> StaffUpload([FromForm] IFormFile file, CancellationToken cancellationToken = default)
         {
-            string status = await _imageService.Upload(file);
+            string status = await _imageService.Upload(file, cancellationToken);
 
             if (status.StartsWith("Failed"))
             {
@@ -43,7 +43,7 @@ namespace EXE201_Backend.Controllers
         /// <returns></returns>
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> Upload([FromForm] IFormFile file)
+        public async Task<IActionResult> Upload([FromForm] IFormFile file, CancellationToken cancellationToken = default)
         {
             string? sub = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
@@ -52,7 +52,7 @@ namespace EXE201_Backend.Controllers
                 return Unauthorized("User ID not found in token.");
             }
 
-            string status = await _imageService.Upload(file);
+            string status = await _imageService.Upload(file, cancellationToken);
 
             if (status.StartsWith("Failed"))
             {

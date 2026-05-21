@@ -1,4 +1,4 @@
-﻿namespace EXE201_Backend.Models
+﻿namespace EXE201_Backend.Models.Requests
 {
     public class AuthRequest
     {

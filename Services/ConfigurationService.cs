@@ -29,7 +29,12 @@ namespace EXE201_Backend.Services
         public string SMTP_FROM { get; set; } = default!;
         public string SELF_SCHEME { get; set; } = default!;
         public string SELF_HOST { get; set; } = default!;
-
+        public int SERVICE_COST_PERCENTAGE { get; set; } = default!;
+        public int PAYMENT_EXPIRE_SEC { get; set; } = default!;
+        public string SE_RETURN { get; set; } = default!;
+        public string SE_ERROR { get; set; } = default!;
+        public string SE_CANCEL { get; set; } = default!;
+        public string SE_IPN_SECRET { get; set; } = default!;
 
         public ConfigurationService()
         {

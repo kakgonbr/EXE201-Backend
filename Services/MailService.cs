@@ -20,7 +20,7 @@ namespace EXE201_Backend.Services
             _logger = logger;
         }
 
-        public async Task<string?> SendOtp(string to)
+        public async Task<string?> SendOtp(string to, CancellationToken cancellationToken = default)
         {
             var identifier = CreateRandomString();
             var otp = GenerateOtp();
@@ -32,7 +32,7 @@ namespace EXE201_Backend.Services
                 return null;
             }
 
-            if (!await SendEmail(to, "Your OTP Code", $"Your OTP code is {otp}\n This code will expire in 5 minutes.\n You can visit {_configurationService.SELF_SCHEME}://{_configurationService.SELF_HOST}/api/auth/confirm?email={to}&otp={otp} to activate this account."))
+            if (!await SendEmail(to, "Your OTP Code", $"Your OTP code is {otp}\n This code will expire in 5 minutes.\n You can visit {_configurationService.SELF_SCHEME}://{_configurationService.SELF_HOST}/api/auth/confirm?email={to}&otp={otp} to activate this account.", cancellationToken))
             {
                 _otpStore.TryRemove(identifier, out _);
                 return null;
@@ -56,7 +56,7 @@ namespace EXE201_Backend.Services
             return false;
         }
 
-        public async Task<bool> SendEmail(string to, string subject, string body)
+        public async Task<bool> SendEmail(string to, string subject, string body, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -81,15 +81,15 @@ namespace EXE201_Backend.Services
                 await smtp.ConnectAsync(
                     _configurationService.SMTP_SERVER,
                     _configurationService.SMTP_PORT,
-                    SecureSocketOptions.StartTls);
+                    SecureSocketOptions.StartTls, cancellationToken);
 
                 await smtp.AuthenticateAsync(
                     _configurationService.SMTP_EMAIL,
-                    _configurationService.SMTP_PASSWORD);
+                    _configurationService.SMTP_PASSWORD, cancellationToken);
 
-                await smtp.SendAsync(message);
+                await smtp.SendAsync(message, cancellationToken);
 
-                await smtp.DisconnectAsync(true);
+                await smtp.DisconnectAsync(true, cancellationToken);
             }
             catch (Exception e)
             {

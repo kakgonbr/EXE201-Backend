@@ -28,21 +28,21 @@ namespace EXE201_Backend.Services
             _logger = logger;
         }
 
-        public async Task<bool> Register(string email, string password)
+        public async Task<bool> Register(string email, string password, CancellationToken cancellationToken = default)
         {
             if (!IsEmailAllowed(email) || !IsPasswordAllowed(password))
             {
                 return false;
             }
 
-            var existing = await _userRepository.GetByEmailAsync(email);
+            var existing = await _userRepository.GetByEmailAsync(email, cancellationToken);
 
             if (existing != null)
             {
                 return false;
             }
 
-            string? identifier = await _mailService.SendOtp(email);
+            string? identifier = await _mailService.SendOtp(email, cancellationToken);
 
             if (identifier == null || !_emailOtpIdentifier.TryAdd(email, identifier))
             {
@@ -61,30 +61,30 @@ namespace EXE201_Backend.Services
 
             user.PasswordHash = new PasswordHasher<User>().HashPassword(user, password);
 
-            await _userRepository.AddAsync(user);
+            await _userRepository.AddAsync(user, cancellationToken);
 
             return true;
         }
 
-        public async Task<bool> Confirm(string email, string otp)
+        public async Task<bool> Confirm(string email, string otp, CancellationToken cancellationToken = default)
         {
             if (_emailOtpIdentifier.TryGetValue(email, out var identifier) && _mailService.IsOtpCorrect(identifier, otp))
             {
-                var user = await _userRepository.GetByEmailAsync(email);
+                var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
                 if (user != null)
                 {
                     user.Verified = true;
                     user.IsActive = true;
-                    await _userRepository.UpdateAsync(user);
+                    await _userRepository.UpdateAsync(user, cancellationToken);
                     return true;
                 }
             }
             return false;
         }
 
-        public async Task<JwtSecurityToken?> Login(string email, string password)
+        public async Task<JwtSecurityToken?> Login(string email, string password, CancellationToken cancellationToken = default)
         {
-            var user = await _userRepository.GetByEmailAsync(email);
+            var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
             if (user != null && user.Verified && user.IsActive)
             {
                 var result = new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash!, password);
@@ -112,12 +112,12 @@ namespace EXE201_Backend.Services
             return null;
         }
 
-        private bool IsEmailAllowed(string email)
+        private static bool IsEmailAllowed(string email)
         {
             return MailAddress.TryCreate(email, out _);
         }
 
-        private bool IsPasswordAllowed(string password)
+        private static bool IsPasswordAllowed(string password)
         {
             return password.Length >= 8;
         }
