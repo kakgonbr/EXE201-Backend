@@ -32,7 +32,7 @@ namespace EXE201_Backend.Services
                 return null;
             }
 
-            if (!await SendEmail(to, "Your OTP Code", $"Your OTP code is {otp}\n This code will expire in 5 minutes.\n You can visit {_configurationService.SELF_SCHEME}://{_configurationService.SELF_HOST}/api/auth/confirm?email={to}&otp={otp} to activate this account.", cancellationToken))
+            if (!await SendEmail(to, "Your OTP Code", $"Your OTP code is {otp}<br></br> This code will expire in 5 minutes.<br></br> You can visit {_configurationService.SELF_SCHEME}://{_configurationService.SELF_HOST}/api/auth/confirm?email={to}&otp={otp} to activate this account.<br></br>If this OTP has expired, you can either register again, or resend it by visiting this link: {_configurationService.SELF_SCHEME}://{_configurationService.SELF_HOST}/api/auth/resend?email={to}", cancellationToken))
             {
                 _otpStore.TryRemove(identifier, out _);
                 return null;
