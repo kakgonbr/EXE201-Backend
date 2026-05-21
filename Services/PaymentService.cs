@@ -110,7 +110,7 @@ namespace EXE201_Backend.Services
 
                 PaymentInfoDto paymentInfo = new()
                 {
-                    OrderAmount = (ticket.Price + CalculateServiceCost(ticket.Price)).ToString("F0"),
+                    OrderAmount = Math.Round(CalculateServiceCost(ticket.Price), 0).ToString(),
                     Merchant = _configurationService.SE_MERCHANT,
                     Currency = "VND",
                     Operation = "PURCHASE",
@@ -134,7 +134,7 @@ namespace EXE201_Backend.Services
         }
 
         private decimal CalculateServiceCost(decimal basePrice) =>
-            basePrice + _configurationService.SERVICE_COST_PERCENTAGE / 100m * basePrice;
+            basePrice + (_configurationService.SERVICE_COST_PERCENTAGE / 100m) * basePrice;
 
         public async Task<bool> InformPaymentStatus(int userId, int ticketId, decimal amountPaid, CancellationToken cancellationToken = default)
         {
@@ -148,7 +148,7 @@ namespace EXE201_Backend.Services
                     return false;
                 }
 
-                var expectedAmount = CalculateServiceCost(ticket.Price);
+                var expectedAmount = Math.Round(CalculateServiceCost(ticket.Price));
 
                 if (amountPaid != expectedAmount)
                 {
