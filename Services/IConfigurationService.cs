@@ -26,5 +26,6 @@
         string SE_RETURN { get; set; }
         string SE_ERROR { get; set; }
         string SE_CANCEL { get; set; }
+        string SE_IPN_SECRET { get; set; }
     }
 }

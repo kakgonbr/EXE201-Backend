@@ -29,7 +29,7 @@ namespace EXE201_Backend.Controllers
                 return Unauthorized("Missing X-Secret-Key");
             }
 
-            if (apiKey != _configurationService.SE_SECRET)
+            if (apiKey != _configurationService.SE_IPN_SECRET)
             {
                 return Unauthorized("Invalid secret");
             }
