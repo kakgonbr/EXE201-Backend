@@ -21,18 +21,18 @@ namespace EXE201_Backend.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] AuthRequest request)
         {
-            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+            if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
             {
-                return BadRequest("Email and password are required.");
+                return BadRequest("Name, email and password are required.");
             }
-            bool success = await _authService.Register(request.Email, request.Password);
+            bool success = await _authService.Register(request.Email, request.Password, request.Name);
             if (success)
             {
                 return Ok("Registration successful. Please check your email for the OTP.");
             }
             else
             {
-                return BadRequest("Registration failed. Please ensure your email and password meet the requirements.");
+                return BadRequest("Registration failed. Please ensure your name, email and password meet the requirements.");
             }
         }
 

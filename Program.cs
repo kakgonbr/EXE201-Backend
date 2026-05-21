@@ -4,6 +4,7 @@ using EXE201_Backend.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -64,9 +65,21 @@ namespace EXE201_Backend
 
             var app = builder.Build();
 
+            var imageDir = Environment.GetEnvironmentVariable("IMAGE_DIR");
+            if (string.IsNullOrWhiteSpace(imageDir))
+            {
+                imageDir = Path.Combine(Directory.GetCurrentDirectory(), "images");
+            }
+            else
+            {
+                imageDir = Path.GetFullPath(imageDir);
+            }
+
+            Directory.CreateDirectory(imageDir);
+
             app.UseStaticFiles(new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(Environment.GetEnvironmentVariable("IMAGE_DIR")!),
+                FileProvider = new PhysicalFileProvider(imageDir),
                 RequestPath = "/images"
             });
 

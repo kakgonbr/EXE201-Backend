@@ -6,6 +6,6 @@ namespace EXE201_Backend.Services
     {
         Task<bool> Confirm(string email, string otp);
         Task<JwtSecurityToken?> Login(string email, string password);
-        Task<bool> Register(string email, string password);
+        Task<bool> Register(string email, string password, string name);
     }
 }

@@ -28,9 +28,14 @@ namespace EXE201_Backend.Services
             _logger = logger;
         }
 
-        public async Task<bool> Register(string email, string password)
+        public async Task<bool> Register(string email, string password, string name)
         {
             if (!IsEmailAllowed(email) || !IsPasswordAllowed(password))
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(name))
             {
                 return false;
             }
@@ -52,7 +57,7 @@ namespace EXE201_Backend.Services
             var user = new User
             {
                 Email = email,
-                Name = email.Split('@')[0],
+                Name = name.Trim(),
                 Verified = false,
                 CreatedOn = _timeProvider.Now,
                 Role = "user",
@@ -93,6 +98,7 @@ namespace EXE201_Backend.Services
                     var claims = new[]
                         {
                             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                            new Claim(ClaimTypes.Name, user.Name),
                             new Claim(ClaimTypes.Role, user.Role)
                         };
 
