@@ -29,7 +29,7 @@ namespace EXE201_Backend.Controllers
 
         [Authorize]
         [HttpGet("month/{month}")]
-        public async Task<IActionResult> GetSchedulesForMonth(int month)
+        public async Task<IActionResult> GetSchedulesForMonth(int month, CancellationToken cancellationToken = default)
         {
             int userId;
             if (int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var parsedUserId))
@@ -41,7 +41,25 @@ namespace EXE201_Backend.Controllers
                 return Unauthorized();
             }
 
-            return Ok(await _scheduleService.GetSchedulesInMonthAsync(userId, month));
+            return Ok(await _scheduleService.GetSchedulesInMonthAsync(userId, month, cancellationToken));
+        }
+
+        [Authorize]
+        [HttpGet("upcoming")]
+        public async Task<IActionResult> GetUpcomingSchedules(int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            int userId;
+            if (int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var parsedUserId))
+            {
+                userId = parsedUserId;
+            }
+            else
+            {
+                return Unauthorized();
+            }
+
+            var result = await _scheduleService.GetUpcoming(userId, page, pageSize, cancellationToken);
+            return Ok(result);
         }
     }
 }
