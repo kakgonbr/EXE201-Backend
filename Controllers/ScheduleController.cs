@@ -46,7 +46,7 @@ namespace EXE201_Backend.Controllers
 
         [Authorize]
         [HttpGet("upcoming")]
-        public async Task<IActionResult> GetUpcomingSchedules(int page, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUpcomingSchedules([FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
         {
             int userId;
             if (int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var parsedUserId))
