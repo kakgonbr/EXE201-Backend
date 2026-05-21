@@ -1,7 +1,7 @@
 ﻿using EXE201_Backend.Data;
 using EXE201_Backend.Extensions;
 using EXE201_Backend.Models;
-using EXE201_Backend.Models.Responses;
+using EXE201_Backend.Models.Dto;
 using EXE201_Backend.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,7 +54,7 @@ namespace EXE201_Backend.Repositories
             return await _db.WorkshopSchedules.ToListAsync(cancellationToken);
         }
 
-        public async Task<PagedResult<WorkshopSchedule>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<WorkshopSchedule>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default)
         {
             return await _db.WorkshopSchedules.ToPagedResultAsync(page, pageSize, cancellationToken);
         }
@@ -72,8 +72,11 @@ namespace EXE201_Backend.Repositories
             return await _db.WorkshopSchedules
                 .Include(ws => ws.Workshop)
                 .Include(ws => ws.WorkshopTickets)
-                    .ThenInclude(wt => wt.WorkshopParticipants.Where(wp => wp.ParticipantId == userId && wp.Status == "paid"))
-                .Where(ws => ws.StartOn >= today && ws.StartOn >= firstDayOfMonth && ws.StartOn <= lastDayOfMonth)
+                    .ThenInclude(wt => wt.WorkshopParticipants)
+                .Where(ws =>
+                    ws.StartOn >= today && ws.StartOn >= firstDayOfMonth && ws.StartOn <= lastDayOfMonth
+                    && ws.WorkshopTickets.Any(wt => wt.WorkshopParticipants.Any(wp => wp.ParticipantId == userId && wp.Status == "paid")))
+                .OrderBy(ws => ws.StartOn)
                 .ToListAsync(cancellationToken);
         }
 
@@ -90,8 +93,11 @@ namespace EXE201_Backend.Repositories
 
             return await _db.WorkshopSchedules
                 .Include(ws => ws.WorkshopTickets)
-                    .ThenInclude(wt => wt.WorkshopParticipants.Where(wp => wp.ParticipantId == userId && wp.Status == "paid"))
-                .AnyAsync(ws => ws.StartOn == ticket.WorkshopSchedule.StartOn && ws.WorkshopTickets.Any(wt => wt.WorkshopParticipants.Any(wp => wp.ParticipantId == userId)), cancellationToken);
+                    .ThenInclude(wt => wt.WorkshopParticipants)
+                .AnyAsync(ws =>
+                ws.StartOn == ticket.WorkshopSchedule.StartOn
+                && ws.WorkshopTickets.Any(wt => wt.WorkshopParticipants.Any(wp => wp.ParticipantId == userId && wp.Status == "paid")),
+                cancellationToken);
         }
     }
 }

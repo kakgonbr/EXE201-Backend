@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace EXE201_Backend.Models.Responses
+namespace EXE201_Backend.Models.Dto
 {
-    public class PaymentInfo
+    public class PaymentInfoDto
     {
         [JsonPropertyName("order_amount")]
         public string OrderAmount { get; set; } = default!;
