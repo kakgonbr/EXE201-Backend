@@ -10,11 +10,13 @@ namespace EXE201_Backend.Services
         private readonly IWorkshopParticipantRepository _workshopParticipantRepository;
         private readonly IWorkshopTicketRepository _workshopTicketRepository;
         private readonly IConfigurationService _configurationService;
-        private readonly ITimeProvider _timeProvider;
+        private readonly ITimeProvider _time_provider;
         private readonly IPaymentRepository _paymentRepository;
         private readonly IMapper _mapper;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<PaymentService> _logger;
+
+        private static ILogger? _staticLogger;
 
         private static readonly ConcurrentDictionary<(int userId, int ticketId), PaymentState> _paymentStates = new();
         private static readonly object _cleanupLock = new();
@@ -22,7 +24,6 @@ namespace EXE201_Backend.Services
         private static CancellationTokenSource? _cleanupCts;
         private static IServiceScopeFactory? _staticScopeFactory;
         private static ITimeProvider? _staticTimeProvider;
-        private static ILogger? _staticLogger;
 
         private record PaymentState(DateTime CreatedAt, DateTime ExpiresAt);
 
@@ -39,7 +40,7 @@ namespace EXE201_Backend.Services
             _workshopParticipantRepository = workshopParticipantRepository;
             _workshopTicketRepository = workshopTicketRepository;
             _configurationService = configurationService;
-            _timeProvider = timeProvider;
+            _time_provider = timeProvider;
             _paymentRepository = paymentRepository;
             _mapper = mapper;
             _scopeFactory = scopeFactory;
@@ -72,34 +73,41 @@ namespace EXE201_Backend.Services
                     return null;
                 }
 
-                var participant = await _workshopParticipantRepository.GetByIdAsync(userId, ticketId, cancellationToken);
+                var expectedAmount = Math.Round(CalculateServiceCost(ticket.Price));
 
-                if (participant == null)
+                try
                 {
-                    participant = new Models.WorkshopParticipant
+                    var existingPayment = await _paymentRepository.GetByIdAsync(userId, ticketId, cancellationToken);
+                    if (existingPayment == null)
                     {
-                        ParticipantId = userId,
-                        TicketId = ticketId,
-                        Status = "unpaid",
-                        BookedOn = _timeProvider.Now
-                    };
+                        var payment = new Models.Payment
+                        {
+                            ParticipantId = userId,
+                            TicketId = ticketId,
+                            Amount = expectedAmount,
+                            Status = "pending",
+                            CreatedOn = _time_provider.Now
+                        };
 
-                    await _workshopParticipantRepository.AddAsync(participant, cancellationToken);
-                    await _workshopParticipantRepository.SaveAsync(cancellationToken);
-
-                    _logger.LogInformation("created WorkshopParticipant (UserId={UserId}, TicketId={TicketId}) with status 'unpaid'.", userId, ticketId);
-                }
-                else
-                {
-                    if (!string.Equals(participant.Status, "unpaid", StringComparison.OrdinalIgnoreCase))
-                    {
-                        _logger.LogWarning("participant exists but not unpaid (UserId={UserId}, TicketId={TicketId}, Status={Status}).", userId, ticketId, participant.Status);
-                        return null;
+                        await _paymentRepository.AddAsync(payment, cancellationToken);
+                        _logger.LogInformation("created Payment (UserId={UserId}, TicketId={TicketId}, Amount={Amount}, Status=pending).", userId, ticketId, expectedAmount);
                     }
+                    else
+                    {
+                        existingPayment.Amount = expectedAmount;
+                        existingPayment.Status = "pending";
+                        existingPayment.CreatedOn = _time_provider.Now;
+                        await _paymentRepository.UpdateAsync(existingPayment, cancellationToken);
+                        _logger.LogInformation("updated existing Payment to pending (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "failed to create/update Payment record for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
                 }
 
                 var expireSeconds = Math.Max(1, _configurationService.PAYMENT_EXPIRE_SEC);
-                var created = _timeProvider.Now;
+                var created = _time_provider.Now;
                 var expiresAt = created.AddSeconds(expireSeconds);
 
                 var key = (userId, ticketId);
@@ -110,7 +118,7 @@ namespace EXE201_Backend.Services
 
                 PaymentInfoDto paymentInfo = new()
                 {
-                    OrderAmount = Math.Round(CalculateServiceCost(ticket.Price), 0).ToString(),
+                    OrderAmount = expectedAmount.ToString("F0"),
                     Merchant = _configurationService.SE_MERCHANT,
                     Currency = "VND",
                     Operation = "PURCHASE",
@@ -172,40 +180,46 @@ namespace EXE201_Backend.Services
             _paymentStates.TryRemove((userId, ticketId), out _);
             _logger.LogDebug("removed transient state for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
 
-            if (amountPaid.HasValue && amountPaid.Value > 0m)
+            try
             {
-                try
+                var payment = await _paymentRepository.GetByIdAsync(userId, ticketId, cancellationToken);
+                if (payment == null)
                 {
-                    var payment = new Models.Payment
+                    var amount = amountPaid ?? 0m;
+                    var newPayment = new Models.Payment
                     {
                         ParticipantId = userId,
                         TicketId = ticketId,
-                        Amount = amountPaid.Value,
+                        Amount = amount,
                         Status = "failed",
-                        CreatedOn = _timeProvider.Now
+                        CreatedOn = _time_provider.Now
                     };
 
-                    await _paymentRepository.AddAsync(payment, cancellationToken);
-                    await _paymentRepository.SaveAsync(cancellationToken);
-
-                    _logger.LogInformation("recorded failed Payment (UserId={UserId}, TicketId={TicketId}, Amount={Amount}).", userId, ticketId, amountPaid.Value);
+                    await _paymentRepository.AddAsync(newPayment, cancellationToken);
+                    _logger.LogInformation("created failed Payment record (UserId={UserId}, TicketId={TicketId}, Amount={Amount}).", userId, ticketId, amount);
                 }
-                catch (Exception ex)
+                else
                 {
-                    _logger.LogWarning(ex, "failed to record failed Payment for (UserId={UserId}, TicketId={TicketId}). Will continue to delete participant if possible.", userId, ticketId);
+                    payment.Status = "failed";
+                    if (amountPaid.HasValue) payment.Amount = amountPaid.Value;
+                    payment.CreatedOn = _time_provider.Now;
+                    await _paymentRepository.UpdateAsync(payment, cancellationToken);
+                    _logger.LogInformation("updated Payment to failed (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "failed to persist failed Payment for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
             }
 
             try
             {
                 await _workshopParticipantRepository.DeleteAsync(userId, ticketId, cancellationToken);
-                await _workshopParticipantRepository.SaveAsync(cancellationToken);
-                _logger.LogInformation("deleted WorkshopParticipant (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
-                return true;
+                _logger.LogInformation("deleted WorkshopParticipant (UserId={UserId}, TicketId={TicketId}) if existed.", userId, ticketId);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "delete via injected repo failed for (UserId={UserId}, TicketId={TicketId}), attempting scoped repo.", userId, ticketId);
+                _logger.LogDebug(ex, "deleting WorkshopParticipant via injected repo failed; attempting scoped repo.");
 
                 if (_staticScopeFactory != null)
                 {
@@ -214,19 +228,16 @@ namespace EXE201_Backend.Services
                         using var scope = _staticScopeFactory.CreateScope();
                         var repo = scope.ServiceProvider.GetRequiredService<IWorkshopParticipantRepository>();
                         await repo.DeleteAsync(userId, ticketId, cancellationToken);
-                        await repo.SaveAsync(cancellationToken);
                         _staticLogger?.LogInformation("deleted WorkshopParticipant via scoped repo (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
-                        return true;
                     }
                     catch (Exception ex2)
                     {
-                        _staticLogger?.LogError(ex2, "scoped repo delete failed for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
+                        _staticLogger?.LogWarning(ex2, "scoped repo delete failed for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
                     }
                 }
             }
 
-            _logger.LogError("unable to delete WorkshopParticipant (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
-            return false;
+            return true;
         }
 
         private async Task<bool> HandlePaymentSuccess(int userId, int ticketId, decimal amountPaid, CancellationToken cancellationToken = default)
@@ -239,60 +250,60 @@ namespace EXE201_Backend.Services
                 return await HandlePaymentFailure(userId, ticketId, amountPaid, cancellationToken);
             }
 
-            if (state.ExpiresAt <= _timeProvider.Now)
+            if (state.ExpiresAt <= _time_provider.Now)
             {
                 _logger.LogInformation("transient state expired for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
                 return await HandlePaymentFailure(userId, ticketId, amountPaid, cancellationToken);
             }
 
-            var participant = await _workshopParticipantRepository.GetByIdAsync(userId, ticketId, cancellationToken);
-            if (participant == null)
-            {
-                _logger.LogError("participant not found (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
-                return false;
-            }
-
-            if (!string.Equals(participant.Status, "unpaid", StringComparison.OrdinalIgnoreCase))
-            {
-                _logger.LogWarning("participant status not 'unpaid' (UserId={UserId}, TicketId={TicketId}, Status={Status}).", userId, ticketId, participant.Status);
-                return false;
-            }
-
-            participant.Status = "paid";
-
             try
             {
-                await _workshopParticipantRepository.UpdateAsync(participant, cancellationToken);
-                await _workshopParticipantRepository.SaveAsync(cancellationToken);
-                _logger.LogInformation("updated WorkshopParticipant status to 'paid' for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
+                var payment = await _paymentRepository.GetByIdAsync(userId, ticketId, cancellationToken);
+                if (payment == null)
+                {
+                    payment = new Models.Payment
+                    {
+                        ParticipantId = userId,
+                        TicketId = ticketId,
+                        Amount = amountPaid,
+                        Status = "success",
+                        CreatedOn = _time_provider.Now
+                    };
+                    await _paymentRepository.AddAsync(payment, cancellationToken);
+                    _logger.LogInformation("created Payment record success (UserId={UserId}, TicketId={TicketId}, Amount={Amount}).", userId, ticketId, amountPaid);
+                }
+                else
+                {
+                    payment.Amount = amountPaid;
+                    payment.Status = "success";
+                    payment.CreatedOn = _time_provider.Now;
+                    await _paymentRepository.UpdateAsync(payment, cancellationToken);
+                    _logger.LogInformation("updated Payment to success (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "failed to update WorkshopParticipant for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
-                return false;
+                _logger.LogWarning(ex, "failed to persist Payment record for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
             }
 
             try
             {
-                var payment = new Models.Payment
+                var participant = new Models.WorkshopParticipant
                 {
                     ParticipantId = userId,
                     TicketId = ticketId,
-                    Amount = amountPaid,
-                    Status = "success",
-                    CreatedOn = _timeProvider.Now
+                    Status = "paid",
+                    BookedOn = _time_provider.Now
                 };
 
-                await _paymentRepository.AddAsync(payment, cancellationToken);
-                await _paymentRepository.SaveAsync(cancellationToken);
-
-                _logger.LogInformation("recorded Payment (UserId={UserId}, TicketId={TicketId}, Amount={Amount}).", userId, ticketId, amountPaid);
+                await _workshopParticipantRepository.AddAsync(participant, cancellationToken);
+                _logger.LogInformation("created WorkshopParticipant (UserId={UserId}, TicketId={TicketId}) with status 'paid'.", userId, ticketId);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "failed to record Payment for (UserId={UserId}, TicketId={TicketId}) after marking participant paid.", userId, ticketId);
-                return true;
+                _logger.LogError(ex, "failed to create WorkshopParticipant for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
+                return false;
             }
         }
 
@@ -303,20 +314,20 @@ namespace EXE201_Backend.Services
                 var payment = await _paymentRepository.GetByIdAsync(userId, ticketId, cancellationToken);
                 if (payment == null)
                 {
-                    _logger.LogInformation("GetPaymentStatusAsync: no Payment record found for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
+                    _logger.LogInformation("no Payment record found for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
                     return null;
                 }
 
-                _logger.LogInformation("GetPaymentStatusAsync: found Payment for (UserId={UserId}, TicketId={TicketId}) with Status={Status}.", userId, ticketId, payment.Status);
+                _logger.LogInformation("found Payment for (UserId={UserId}, TicketId={TicketId}) with Status={Status}.", userId, ticketId, payment.Status);
                 return payment.Status;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetPaymentStatusAsync: unexpected error while checking payment for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
+                _logger.LogError(ex, "unexpected error while checking payment for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
                 return null;
             }
         }
-
+        
         private static async Task CleanupLoopAsync(CancellationToken cancellationToken)
         {
             var scanIntervalMs = 5_000;
@@ -351,14 +362,44 @@ namespace EXE201_Backend.Services
                                     try
                                     {
                                         using var scope = _staticScopeFactory.CreateScope();
-                                        var repo = scope.ServiceProvider.GetRequiredService<IWorkshopParticipantRepository>();
-                                        await repo.DeleteAsync(key.userId, key.ticketId, cancellationToken);
-                                        await repo.SaveAsync(cancellationToken);
-                                        log?.LogInformation("CleanupLoop: deleted stale WorkshopParticipant (UserId={UserId}, TicketId={TicketId}) from DB.", key.userId, key.ticketId);
+                                        var paymentRepo = scope.ServiceProvider.GetRequiredService<IPaymentRepository>();
+                                        var participantRepo = scope.ServiceProvider.GetRequiredService<IWorkshopParticipantRepository>();
+
+                                        var payment = await paymentRepo.GetByIdAsync(key.userId, key.ticketId, cancellationToken);
+                                        if (payment == null)
+                                        {
+                                            var failed = new Models.Payment
+                                            {
+                                                ParticipantId = key.userId,
+                                                TicketId = key.ticketId,
+                                                Amount = 0m,
+                                                Status = "failed",
+                                                CreatedOn = _staticTimeProvider!.Now
+                                            };
+                                            await paymentRepo.AddAsync(failed, cancellationToken);
+                                            log?.LogInformation("CleanupLoop: created failed Payment record for expired state (UserId={UserId}, TicketId={TicketId}).", key.userId, key.ticketId);
+                                        }
+                                        else
+                                        {
+                                            payment.Status = "failed";
+                                            payment.CreatedOn = _staticTimeProvider!.Now;
+                                            await paymentRepo.UpdateAsync(payment, cancellationToken);
+                                            log?.LogInformation("CleanupLoop: updated Payment to failed for expired state (UserId={UserId}, TicketId={TicketId}).", key.userId, key.ticketId);
+                                        }
+
+                                        try
+                                        {
+                                            await participantRepo.DeleteAsync(key.userId, key.ticketId, cancellationToken);
+                                            log?.LogInformation("CleanupLoop: deleted WorkshopParticipant for expired state (UserId={UserId}, TicketId={TicketId}).", key.userId, key.ticketId);
+                                        }
+                                        catch (Exception exDel)
+                                        {
+                                            log?.LogDebug(exDel, "CleanupLoop: deleting WorkshopParticipant for expired state failed (UserId={UserId}, TicketId={TicketId}).", key.userId, key.ticketId);
+                                        }
                                     }
                                     catch (Exception ex)
                                     {
-                                        log?.LogWarning(ex, "CleanupLoop: failed to delete stale WorkshopParticipant (UserId={UserId}, TicketId={TicketId}).", key.userId, key.ticketId);
+                                        log?.LogWarning(ex, "CleanupLoop: failed to persist failure for expired payment state (UserId={UserId}, TicketId={TicketId}).", key.userId, key.ticketId);
                                     }
                                 }
                             }

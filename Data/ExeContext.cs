@@ -45,7 +45,7 @@ public partial class ExeContext : DbContext
     {
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Payments__3214EC079F332528");
+            entity.HasKey(e => new { e.ParticipantId, e.TicketId }).HasName("pk_payment");
 
             entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.CreatedOn)
@@ -55,18 +55,13 @@ public partial class ExeContext : DbContext
                 .HasMaxLength(10)
                 .IsUnicode(false)
                 .HasDefaultValue("failed");
-
-            entity.HasOne(d => d.WorkshopParticipant).WithMany(p => p.Payments)
-                .HasForeignKey(d => new { d.ParticipantId, d.TicketId })
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_payment_workshopparticipant");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Users__3214EC071B9E811E");
+            entity.HasKey(e => e.Id).HasName("PK__Users__3214EC074689F621");
 
-            entity.HasIndex(e => e.Email, "UQ__Users__A9D1053476910D5D").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Users__A9D1053487AAB18E").IsUnique();
 
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("(getdate())")
@@ -109,7 +104,7 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<Workshop>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC0787B2C591");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC070B528EE5");
 
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("(getdate())")
@@ -150,14 +145,14 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<WorkshopCategory>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC076B12AAC8");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC0783EF0009");
 
             entity.Property(e => e.Name).HasMaxLength(100);
         });
 
         modelBuilder.Entity<WorkshopImage>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC07913F5710");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC07203BFB89");
 
             entity.Property(e => e.ImgLink)
                 .HasMaxLength(256)
@@ -171,7 +166,7 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<WorkshopLevel>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC0788C00C77");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC07300197BB");
 
             entity.Property(e => e.Name)
                 .HasMaxLength(20)
@@ -203,7 +198,7 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<WorkshopReview>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC070570230E");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC075738D17E");
 
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("(getdate())")
@@ -223,7 +218,7 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<WorkshopSchedule>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC076296B399");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC07D72EC451");
 
             entity.HasOne(d => d.Workshop).WithMany(p => p.WorkshopSchedules)
                 .HasForeignKey(d => d.WorkshopId)
@@ -233,7 +228,7 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<WorkshopScheduleConfig>(entity =>
         {
-            entity.HasKey(e => e.WorkshopId).HasName("PK__Workshop__7A008C0A749FA569");
+            entity.HasKey(e => e.WorkshopId).HasName("PK__Workshop__7A008C0A0C8260F7");
 
             entity.ToTable("WorkshopScheduleConfig");
 
@@ -254,7 +249,7 @@ public partial class ExeContext : DbContext
 
         modelBuilder.Entity<WorkshopTicket>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC074AA02593");
+            entity.HasKey(e => e.Id).HasName("PK__Workshop__3214EC07EF6C2EC9");
 
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.TicketType)

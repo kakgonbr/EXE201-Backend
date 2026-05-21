@@ -15,7 +15,5 @@ public partial class WorkshopParticipant
 
     public virtual User Participant { get; set; } = null!;
 
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
-
     public virtual WorkshopTicket Ticket { get; set; } = null!;
 }
