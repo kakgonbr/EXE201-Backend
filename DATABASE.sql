@@ -117,10 +117,10 @@ CREATE TABLE WorkshopParticipants
 (
     ParticipantId int NOT NULL,
     TicketId int NOT NULL,
-    Status varchar(10) NOT NULL DEFAULT 'unpaid',
+    Status varchar(10) NOT NULL DEFAULT 'paid',
     BookedOn datetime NOT NULL DEFAULT GETDATE(),
 
-    CONSTRAINT ck_workshopparticipant_status CHECK (STATUS IN ('unpaid', 'paid', 'checked in')),
+    CONSTRAINT ck_workshopparticipant_status CHECK (STATUS IN ('paid', 'checked in')),
     CONSTRAINT fk_workshopparticipant_workshopticket FOREIGN KEY (TicketId) REFERENCES WorkshopTickets,
     CONSTRAINT fk_workshopparticipant_user FOREIGN KEY (ParticipantId) REFERENCES Users,
     CONSTRAINT pk_workshopparticipant PRIMARY KEY (Participantid, TicketId)
@@ -129,7 +129,7 @@ CREATE TABLE WorkshopParticipants
 CREATE TABLE WorkshopLikes
 (
     UserId int NOT NULL,
-    WorkshopId int NOT NULL,
+    WorkshopId int NOT NULL
 
     CONSTRAINT pk_workshoplike PRIMARY KEY (UserId, WorkshopId),
     CONSTRAINT fk_workshoplike_user FOREIGN KEY (UserId) REFERENCES Users,
@@ -138,16 +138,16 @@ CREATE TABLE WorkshopLikes
 
 CREATE TABLE Payments
 (
-    Id int IDENTITY(1, 1) PRIMARY KEY,
     ParticipantId int NOT NULL,
     TicketId int NOT NULL,
     Amount decimal(18, 2) NOT NULL,
     Status varchar(10) NOT NULL DEFAULT 'failed',
     CreatedOn datetime NOT NULL DEFAULT GETDATE(),
 
-    CONSTRAINT ck_payment_status CHECK (Status IN ('failed', 'success', 'canceled')),
-    CONSTRAINT ck_payment_amount CHECK (Amount > 0),
-    CONSTRAINT fk_payment_workshopparticipant FOREIGN KEY (ParticipantId, TicketId) REFERENCES WorkshopParticipants
+    CONSTRAINT pk_payment PRIMARY KEY (ParticipantId, TicketId),
+    CONSTRAINT ck_payment_status CHECK (Status IN ('failed', 'success', 'pending')),
+    CONSTRAINT ck_payment_amount CHECK (Amount > 0)
+    -- CONSTRAINT fk_payment_workshopparticipant FOREIGN KEY (ParticipantId, TicketId) REFERENCES WorkshopParticipants
 )
 
 CREATE TABLE WorkshopReviews
@@ -308,9 +308,6 @@ INSERT INTO Payments (ParticipantId, TicketId, Amount, Status)
 VALUES (@user1, @t_w1_s1_morning, 400000, 'success');
 
 INSERT INTO WorkshopParticipants (ParticipantId, TicketId, Status)
-VALUES (@user2, @t_w1_s1_afternoon, 'unpaid');
-
-INSERT INTO WorkshopParticipants (ParticipantId, TicketId, Status)
 VALUES (@user2, @t_w1_s2_morning, 'paid');
 
 INSERT INTO Payments (ParticipantId, TicketId, Amount, Status)
@@ -328,8 +325,6 @@ VALUES (@user2, @t_w2_s3_afternoon, 'paid');
 INSERT INTO Payments (ParticipantId, TicketId, Amount, Status)
 VALUES (@user2, @t_w2_s3_afternoon, 150000, 'success');
 
-INSERT INTO WorkshopParticipants (ParticipantId, TicketId, Status)
-VALUES (@user1, @t_w2_s4_evening, 'unpaid');
 
 -- Additional test data to exercise WorkshopRepository.SearchAsync filters and sorts
 -- Appended after existing inserts
