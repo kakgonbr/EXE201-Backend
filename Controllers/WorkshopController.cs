@@ -1,4 +1,4 @@
-﻿using EXE201_Backend.Repositories;
+using EXE201_Backend.Repositories;
 using EXE201_Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -37,7 +37,7 @@ namespace EXE201_Backend.Controllers
 
         [Authorize]
         [AllowAnonymous]
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetWorkshopById(int id, CancellationToken cancellationToken = default)
         {
             int? userId;
@@ -54,6 +54,18 @@ namespace EXE201_Backend.Controllers
             {
                 return NotFound();
             }
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "staff")]
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllWorkshops(
+            [FromQuery] string? status,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await _workshopService.GetAllWorkshopsAsync(status, page, pageSize, cancellationToken);
             return Ok(result);
         }
 

@@ -1,4 +1,4 @@
-﻿using EXE201_Backend.Data;
+using EXE201_Backend.Data;
 using EXE201_Backend.Models;
 using EXE201_Backend.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +67,28 @@ namespace EXE201_Backend.Repositories
         public async Task<IEnumerable<Workshop>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             return await _db.Workshops.ToListAsync(cancellationToken);
+        }
+
+        public async Task<PagedResultDto<Workshop>> GetAllWorkshopsAsync(string? status = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+        {
+            IQueryable<Workshop> q = _db.Workshops
+                .AsQueryable()
+                .Include(w => w.Category)
+                .Include(w => w.Level)
+                .Include(w => w.WorkshopReviews!)
+                .Include(w => w.WorkshopImages!)
+                .Include(w => w.WorkshopSchedules!)
+                    .ThenInclude(ws => ws.WorkshopTickets);
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                var trimmed = status.Trim();
+                q = q.Where(w => w.Status == trimmed);
+            }
+
+            q = q.OrderByDescending(w => w.CreatedOn);
+
+            return await q.ToPagedResultAsync(page, pageSize, cancellationToken);
         }
 
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
