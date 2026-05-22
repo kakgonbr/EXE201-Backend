@@ -98,6 +98,8 @@
 
         public void CheckImagePresent(string imageName, int userId)
         {
+            CleanupPending();
+
             if (_imageTrackers.Contains(new() { CustomerId = userId }))
             {
                 ImageUploadTracker? tracker = _imageTrackers.FirstOrDefault(t => t.CustomerId == userId);
