@@ -63,6 +63,8 @@ namespace EXE201_Backend
                 .AddScoped<IWorkshopTicketRepository, WorkshopTicketRepository>()
                 .AddScoped<IPaymentRepository, PaymentRepository>()
                 .AddScoped<IPaymentService, PaymentService>()
+                .AddScoped<IWorkshopReviewReposistory, WorkshopReviewReposistory>()
+                .AddScoped<ICommunityService, CommunityService>()
                 .AddScoped<IScheduleService, ScheduleService>();
 
             builder.Services.AddControllers().AddJsonOptions(o =>

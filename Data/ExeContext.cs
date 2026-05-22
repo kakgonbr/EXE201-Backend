@@ -75,6 +75,9 @@ public partial class ExeContext : DbContext
             entity.Property(e => e.GoogleUserId)
                 .HasMaxLength(256)
                 .IsUnicode(false);
+            entity.Property(e => e.Location)
+                .HasMaxLength(256)
+                .IsUnicode(false);
             entity.Property(e => e.Name).HasMaxLength(100);
             entity.Property(e => e.PasswordHash)
                 .HasMaxLength(256)
