@@ -85,6 +85,8 @@ namespace EXE201_Backend.Services
                     IsActive = false
                 };
 
+                user.PasswordHash = new PasswordHasher<User>().HashPassword(user, password);
+
                 await _userRepository.AddAsync(user, cancellationToken);
             }
 
@@ -190,6 +192,92 @@ namespace EXE201_Backend.Services
 
             _emailOtpStore[email] = (newIdentifier, now);
             return true;
+        }
+
+        public async Task<bool> ChangePassword(int userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default)
+        {
+            if (!IsPasswordAllowed(newPassword))
+            {
+                return false;
+            }
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+            if (user == null || !user.Verified || !user.IsActive)
+            {
+                return false;
+            }
+            var result = new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash!, currentPassword);
+            if (result == PasswordVerificationResult.Success)
+            {
+                user.PasswordHash = new PasswordHasher<User>().HashPassword(user, newPassword);
+                await _userRepository.UpdateAsync(user, cancellationToken);
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<bool> ResetPassword(string email, CancellationToken cancellationToken = default)
+        {
+            var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
+            if (user == null || !user.Verified || !user.IsActive)
+            {
+                return false;
+            }
+
+            var now = _timeProvider.Now;
+            if (_emailOtpStore.TryGetValue(email, out var entry))
+            {
+                var resendDelay = TimeSpan.FromSeconds(_configurationService.OTP_RESEND_DELAY_SEC);
+                if (now - entry.SentAt < resendDelay)
+                {
+                    return false;
+                }
+            }
+
+            string? identifier = await _mailService.SendResetPassword(email, cancellationToken);
+            if (identifier == null)
+            {
+                return false;
+            }
+
+            var sentAt = _timeProvider.Now;
+            _emailOtpStore[email] = (identifier, sentAt);
+            return true;
+        }
+
+        public async Task<bool> ConfirmPasswordReset(string email, string otp, string newPassword, CancellationToken cancellationToken = default)
+        {
+            if (!IsPasswordAllowed(newPassword))
+            {
+                return false;
+            }
+
+            var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
+            if (user == null || !user.Verified || !user.IsActive)
+            {
+                return false;
+            }
+
+            if (_emailOtpStore.TryGetValue(email, out var entry))
+            {
+                var sentAt = entry.SentAt;
+                var expireSpan = TimeSpan.FromSeconds(_configurationService.OTP_EXPIRE_SEC);
+                if (_timeProvider.Now - sentAt > expireSpan)
+                {
+                    _emailOtpStore.TryRemove(email, out _);
+                    return false;
+                }
+
+                var identifier = entry.Identifier;
+                if (_mailService.IsOtpCorrect(identifier, otp))
+                {
+                    user.PasswordHash = new PasswordHasher<User>().HashPassword(user, newPassword);
+                    await _userRepository.UpdateAsync(user, cancellationToken);
+                    _emailOtpStore.TryRemove(email, out _);
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool IsEmailAllowed(string email)

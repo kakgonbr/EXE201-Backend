@@ -29,5 +29,7 @@
         string SE_IPN_SECRET { get; set; }
         int OTP_EXPIRE_SEC { get; set; }
         int OTP_RESEND_DELAY_SEC { get; set; }
+        string FE_HOST { get; set; }
+        string FE_SCHEME { get; set; }
     }
 }
