@@ -24,7 +24,7 @@ namespace EXE201_Backend.Services
         {
             var identifier = CreateRandomString();
             var otp = GenerateOtp();
-            var expiry = _timeProvider.Now.AddMinutes(5);
+            var expiry = _timeProvider.Now.AddSeconds(_configurationService.OTP_EXPIRE_SEC);
 
             if (!_otpStore.TryAdd(identifier, (otp, expiry)))
             {
@@ -32,7 +32,28 @@ namespace EXE201_Backend.Services
                 return null;
             }
 
-            if (!await SendEmail(to, "Your OTP Code", $"Your OTP code is {otp}<br></br> This code will expire in 5 minutes.<br></br> You can visit {_configurationService.SELF_SCHEME}://{_configurationService.SELF_HOST}/api/auth/confirm?email={to}&otp={otp} to activate this account.<br></br>If this OTP has expired, you can either register again, or resend it by visiting this link: {_configurationService.SELF_SCHEME}://{_configurationService.SELF_HOST}/api/auth/resend?email={to}", cancellationToken))
+            if (!await SendEmail(to, "Your OTP Code", $"Your OTP code is {otp}<br></br> This code will expire in {_configurationService.OTP_EXPIRE_SEC / 60.0} minutes.<br></br> You can visit {_configurationService.FE_SCHEME}://{_configurationService.FE_HOST}/register/confirm?email={to}&otp={otp} to activate this account.<br></br>If this OTP has expired, you can either register again, or resend it by visiting this link: {_configurationService.FE_SCHEME}://{_configurationService.FE_HOST}/register/resend?email={to}", cancellationToken))
+            {
+                _otpStore.TryRemove(identifier, out _);
+                return null;
+            }
+
+            return identifier;
+        }
+
+        public async Task<string?> SendResetPassword(string to, CancellationToken cancellationToken = default)
+        {
+            var identifier = CreateRandomString();
+            var otp = GenerateOtp();
+            var expiry = _timeProvider.Now.AddSeconds(_configurationService.OTP_EXPIRE_SEC);
+
+            if (!_otpStore.TryAdd(identifier, (otp, expiry)))
+            {
+                _logger.LogError("Failed to store OTP for key {Key}", identifier);
+                return null;
+            }
+
+            if (!await SendEmail(to, "Your Password Reset OTP Code", $"Your OTP code is {otp}<br></br> This code will expire in {_configurationService.OTP_EXPIRE_SEC / 60.0} minutes.<br></br> You can visit {_configurationService.FE_SCHEME}://{_configurationService.FE_HOST}/reset-password/confirm?email={to}&otp={otp} to reset your password.", cancellationToken))
             {
                 _otpStore.TryRemove(identifier, out _);
                 return null;
