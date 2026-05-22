@@ -5,5 +5,6 @@
         public string? NewName { get; set; }
         public string? NewPhoneNumber { get; set; }
         public string? NewAvatarUrl { get; set; }
+        public string? NewLocation { get; set; }
     }
 }

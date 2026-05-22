@@ -85,6 +85,29 @@ namespace EXE201_Backend.Controllers
         }
 
         [Authorize]
+        [HttpPost("change-location")]
+        public async Task<IActionResult> ChangeLocation([FromBody] ChangeUserInfoRequest changeUserInfoRequest)
+        {
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var parsedUserId))
+            {
+                return Unauthorized();
+            }
+
+            if (string.IsNullOrWhiteSpace(changeUserInfoRequest.NewLocation))
+            {
+                return BadRequest();
+            }
+
+            var success = await _userService.ChangeLocation(parsedUserId, changeUserInfoRequest.NewLocation);
+            if (!success)
+            {
+                return BadRequest();
+            }
+
+            return NoContent();
+        }
+
+        [Authorize]
         [HttpPost("change-avatar")]
         public async Task<IActionResult> ChangeAvatar([FromBody] ChangeUserInfoRequest changeUserInfoRequest)
         {

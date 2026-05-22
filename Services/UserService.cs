@@ -81,6 +81,19 @@ namespace EXE201_Backend.Services
             return true;
         }
 
+        public async Task<bool> ChangeLocation(int userId, string newLocation, CancellationToken cancellationToken = default)
+        {
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+            if (user == null)
+            {
+                return false;
+            }
+
+            user.Location = newLocation;
+            await _userRepository.UpdateAsync(user, cancellationToken);
+
+            return true;
+        }
 
         public static bool IsValidPhone(string phone)
         {
