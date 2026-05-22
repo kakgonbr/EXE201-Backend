@@ -33,6 +33,5 @@ namespace EXE201_Backend.Controllers
             var result = await _userService.GetUsers(page, pageSize);
             return Ok(result);
         }
-
     }
 }
