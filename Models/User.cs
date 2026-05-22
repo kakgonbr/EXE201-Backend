@@ -25,6 +25,8 @@ public partial class User
 
     public string? GoogleUserId { get; set; }
 
+    public string? AvatarLink { get; set; }
+
     public virtual ICollection<WorkshopParticipant> WorkshopParticipants { get; set; } = new List<WorkshopParticipant>();
 
     public virtual ICollection<WorkshopReview> WorkshopReviews { get; set; } = new List<WorkshopReview>();
