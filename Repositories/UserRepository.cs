@@ -18,6 +18,7 @@ namespace EXE201_Backend.Repositories
         public async Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _db.Users
+                .Include(u => u.Workshops)
                 .SingleOrDefaultAsync(u => u.Id == id, cancellationToken);
         }
 
