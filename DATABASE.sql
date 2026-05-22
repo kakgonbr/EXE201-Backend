@@ -22,6 +22,7 @@ CREATE TABLE Users
     PhoneNumber varchar(20),
     PasswordHash varchar(256),
     AvatarLink varchar(256),
+    Location varchar(256),
     Role varchar(10) NOT NULL DEFAULT 'user',
     Name nvarchar(100) NOT NULL,
     Verified bit NOT NULL DEFAULT 0,
