@@ -61,9 +61,59 @@ namespace EXE201_Backend.Repositories
 
         public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            var workshop = await GetByIdAsync(id, null, cancellationToken);
+            var workshop = await _db.Workshops
+                .Include(w => w.WorkshopImages)
+                .Include(w => w.WorkshopReviews)
+                .Include(w => w.WorkshopScheduleConfig)
+                .Include(w => w.WorkshopSchedules)
+                    .ThenInclude(ws => ws.WorkshopTickets)
+                        .ThenInclude(wt => wt.WorkshopParticipants)
+                .Include(w => w.Users)
+                .SingleOrDefaultAsync(w => w.Id == id, cancellationToken);
+
             if (workshop != null)
             {
+                foreach (var schedule in workshop.WorkshopSchedules)
+                {
+                    if (schedule.WorkshopTickets != null && schedule.WorkshopTickets.Count > 0)
+                    {
+                        foreach (var ticket in schedule.WorkshopTickets)
+                        {
+                            if (ticket.WorkshopParticipants != null && ticket.WorkshopParticipants.Count > 0)
+                            {
+                                _db.WorkshopParticipants.RemoveRange(ticket.WorkshopParticipants);
+                            }
+                        }
+
+                        _db.WorkshopTickets.RemoveRange(schedule.WorkshopTickets);
+                    }
+                }
+
+                if (workshop.WorkshopSchedules != null && workshop.WorkshopSchedules.Count > 0)
+                {
+                    _db.WorkshopSchedules.RemoveRange(workshop.WorkshopSchedules);
+                }
+
+                if (workshop.WorkshopImages != null && workshop.WorkshopImages.Count > 0)
+                {
+                    _db.WorkshopImages.RemoveRange(workshop.WorkshopImages);
+                }
+
+                if (workshop.WorkshopReviews != null && workshop.WorkshopReviews.Count > 0)
+                {
+                    _db.WorkshopReviews.RemoveRange(workshop.WorkshopReviews);
+                }
+
+                if (workshop.WorkshopScheduleConfig != null)
+                {
+                    _db.WorkshopScheduleConfigs.Remove(workshop.WorkshopScheduleConfig);
+                }
+
+                if (workshop.Users != null && workshop.Users.Count > 0)
+                {
+                    workshop.Users.Clear();
+                }
+
                 _db.Workshops.Remove(workshop);
                 await _db.SaveChangesAsync(cancellationToken);
             }

@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace EXE201_Backend.Services
 {
     public class ImageService : IImageService
@@ -71,6 +73,22 @@ namespace EXE201_Backend.Services
             }
         }
 
+        public void DeleteImageFile(string imageName)
+        {
+            if (string.IsNullOrWhiteSpace(imageName))
+            {
+                return;
+            }
+
+            var fileName = Path.GetFileName(imageName);
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                return;
+            }
+
+            DeleteImage(fileName);
+        }
+
         private void DeleteImage(string name)
         {
             _logger.LogInformation("Deleting {Name}", name);
@@ -132,7 +150,10 @@ namespace EXE201_Backend.Services
             string timeStamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
             string randomPart = new Random().Next(1000, 9999).ToString();
             string uniqueName = $"{timeStamp}_{randomPart}{extension}";
-            string filePath = Path.Combine(_configurationService.IMAGE_DIR, uniqueName);
+            string directory = _configurationService.IMAGE_DIR;
+
+            Directory.CreateDirectory(directory);
+            string filePath = Path.Combine(directory, uniqueName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
             {

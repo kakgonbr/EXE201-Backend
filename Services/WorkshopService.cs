@@ -4,6 +4,7 @@ using EXE201_Backend.Models;
 using EXE201_Backend.Models.Dto;
 using EXE201_Backend.Models.Requests;
 using EXE201_Backend.Repositories;
+using System.Linq;
 
 namespace EXE201_Backend.Services
 {
@@ -16,8 +17,9 @@ namespace EXE201_Backend.Services
         private readonly IConfigurationService _configurationService;
         private readonly ILogger<WorkshopService> _logger;
         private readonly IMapper _mapper;
+        private readonly IImageService _imageService;
 
-        public WorkshopService(IUserRepository userRepository, IWorkshopRepository workshopRepository, IWorkshopScheduleRepository workshopScheduleRepository, ITimeProvider timeProvider, IConfigurationService configurationService, ILogger<WorkshopService> logger, IMapper mapper)
+        public WorkshopService(IUserRepository userRepository, IWorkshopRepository workshopRepository, IWorkshopScheduleRepository workshopScheduleRepository, ITimeProvider timeProvider, IConfigurationService configurationService, ILogger<WorkshopService> logger, IMapper mapper, IImageService imageService)
         {
             _userRepository = userRepository;
             _workshopRepository = workshopRepository;
@@ -26,6 +28,7 @@ namespace EXE201_Backend.Services
             _configurationService = configurationService;
             _logger = logger;
             _mapper = mapper;
+            _imageService = imageService;
         }
 
         public async Task<IEnumerable<WorkshopDisplayDto>> GetRecommendedWorkshopsAsync(int? userId, CancellationToken cancellationToken = default)
@@ -83,7 +86,13 @@ namespace EXE201_Backend.Services
                 LevelId = request.LevelId,
                 Language = string.IsNullOrWhiteSpace(request.Language) ? "en" : request.Language.Trim(),
                 CreatedBy = userId,
-                Status = "draft"
+                Status = string.IsNullOrWhiteSpace(request.Status) ? "pending" : request.Status.Trim(),
+                WorkshopImages = request.ImageLinks != null
+                    ? request.ImageLinks
+                        .Where(link => !string.IsNullOrWhiteSpace(link))
+                        .Select(link => new WorkshopImage { ImgLink = link!.Trim() })
+                        .ToList()
+                    : new List<WorkshopImage>()
             };
 
             await _workshopRepository.AddAsync(workshop, cancellationToken);
@@ -147,6 +156,11 @@ namespace EXE201_Backend.Services
 
             workshop.Duration = maxDurationMinutes;
             await _workshopRepository.UpdateAsync(workshop, cancellationToken);
+
+            if (request.ImageLinks != null && request.ImageLinks.Any())
+            {
+                _imageService.ConsumeImage(userId);
+            }
 
             return workshop.Id;
         }
@@ -215,6 +229,24 @@ namespace EXE201_Backend.Services
             if (!string.IsNullOrWhiteSpace(request.Status))
                 workshop.Status = request.Status.Trim();
 
+            if (request.ImageLinks != null && request.ImageLinks.Any())
+            {
+                workshop.WorkshopImages ??= new List<WorkshopImage>();
+                var existingLinks = workshop.WorkshopImages
+                    .Where(img => !string.IsNullOrWhiteSpace(img.ImgLink))
+                    .Select(img => img.ImgLink.Trim())
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var imageLink in request.ImageLinks.Where(link => !string.IsNullOrWhiteSpace(link)).Select(link => link.Trim()))
+                {
+                    if (!existingLinks.Contains(imageLink))
+                    {
+                        workshop.WorkshopImages.Add(new WorkshopImage { ImgLink = imageLink });
+                        existingLinks.Add(imageLink);
+                    }
+                }
+            }
+
             var scheduleReq = request.Schedules?.FirstOrDefault();
 
             if (scheduleReq != null)
@@ -278,6 +310,12 @@ namespace EXE201_Backend.Services
             }
 
             await _workshopRepository.SaveAsync(cancellationToken);
+
+            if (request.ImageLinks != null && request.ImageLinks.Any())
+            {
+                _imageService.ConsumeImage(userId);
+            }
+
             return true;
         }
 
@@ -292,6 +330,19 @@ namespace EXE201_Backend.Services
             if (workshop.CreatedBy != userId)
             {
                 throw new UnauthorizedAccessException("You can only delete your own workshops.");
+            }
+
+            if (workshop.WorkshopImages != null)
+            {
+                foreach (var image in workshop.WorkshopImages.Where(img => !string.IsNullOrWhiteSpace(img.ImgLink)))
+                {
+                    _imageService.DeleteImageFile(image.ImgLink.Trim());
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(workshop.ThumbnailLink))
+            {
+                _imageService.DeleteImageFile(workshop.ThumbnailLink.Trim());
             }
 
             await _workshopRepository.DeleteAsync(id, cancellationToken);

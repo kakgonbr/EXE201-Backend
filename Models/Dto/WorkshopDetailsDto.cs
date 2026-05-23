@@ -2,6 +2,7 @@
 {
     public class WorkshopDetailsDto
     {
+        public int Id { get; set; }
         public string Title { get; set; } = null!;
         public string? ThumbnailLink { get; set; }
         public string? Description { get; set; } = null!;
