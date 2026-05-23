@@ -146,12 +146,12 @@ namespace EXE201_Backend.Controllers
         }
 
         [HttpGet("all")]
-        public async Task<IActionResult> GetAllWorkshops([FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAllWorkshops([FromQuery] string? status = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 10;
 
-            var result = await _workshopService.GetAllWorkshopsAsync(page, pageSize, cancellationToken);
+            var result = await _workshopService.GetAllWorkshopsAsync(status, page, pageSize, cancellationToken);
             return Ok(result);
         }
 

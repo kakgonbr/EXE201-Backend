@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using EXE201_Backend.Models.Dto;
 using EXE201_Backend.Repositories;
 using System.Collections.Concurrent;
@@ -131,7 +131,9 @@ namespace EXE201_Backend.Services
 
                 paymentInfo.Signature = GetSignature(paymentInfo, _configurationService.SE_SECRET);
 
-                _logger.LogDebug("returning PaymentInfo for (UserId={UserId}, TicketId={TicketId}).", userId, ticketId);
+                _logger.LogInformation("StartCheckout signature verification info - RawData: order_amount={OrderAmount},merchant={Merchant},currency={Currency},operation={Operation},order_description={OrderDescription},order_invoice_number={OrderInvoiceNumber},success_url={SuccessUrl},error_url={ErrorUrl},cancel_url={CancelUrl}. Secret Length: {SecretLen}. Signature: {Signature}", 
+                    paymentInfo.OrderAmount, paymentInfo.Merchant, paymentInfo.Currency, paymentInfo.Operation, paymentInfo.OrderDescription, paymentInfo.OrderInvoiceNumber, paymentInfo.SuccessUrl, paymentInfo.ErrorUrl, paymentInfo.CancelUrl, _configurationService.SE_SECRET?.Length ?? 0, paymentInfo.Signature);
+
                 return paymentInfo;
             }
             catch (Exception ex)
