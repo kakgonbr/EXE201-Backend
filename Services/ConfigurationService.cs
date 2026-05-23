@@ -37,6 +37,8 @@ namespace EXE201_Backend.Services
         public string SE_IPN_SECRET { get; set; } = default!;
         public int OTP_EXPIRE_SEC { get; set; } = default!;
         public int OTP_RESEND_DELAY_SEC { get; set; } = default!;
+        public string FE_HOST { get; set; } = default!;
+        public string FE_SCHEME { get; set; } = default!;
 
         public ConfigurationService()
         {

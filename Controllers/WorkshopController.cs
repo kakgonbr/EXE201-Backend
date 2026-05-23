@@ -1,4 +1,5 @@
-﻿using EXE201_Backend.Models.Requests;
+
+using EXE201_Backend.Models.Requests;
 using EXE201_Backend.Repositories;
 using EXE201_Backend.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -54,6 +55,30 @@ namespace EXE201_Backend.Controllers
                 return NotFound();
             }
             return Ok(result);
+        }
+
+        [Authorize(Roles = "staff")]
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllWorkshops(
+            [FromQuery] string? status,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var result = await _workshopService.GetAllWorkshopsAsync(status, page, pageSize, cancellationToken);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    error = ex.Message,
+                    detail = ex.InnerException?.Message,
+                    stackTrace = ex.StackTrace
+                });
+            }
         }
 
         [HttpGet("search")]

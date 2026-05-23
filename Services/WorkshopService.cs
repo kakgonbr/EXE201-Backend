@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using EXE201_Backend.Extensions;
 using EXE201_Backend.Models;
 using EXE201_Backend.Models.Dto;
@@ -39,6 +39,12 @@ namespace EXE201_Backend.Services
             var workshop = await _workshopRepository.GetByIdAsync(id, userId, cancellationToken);
             if (workshop == null) return null;
             return _mapper.Map<WorkshopDetailsDto>(workshop);
+        }
+
+        public async Task<PagedResultDto<WorkshopDisplayDto>> GetAllWorkshopsAsync(string? status = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+        {
+            var pagedWorkshops = await _workshopRepository.GetAllWorkshopsAsync(status, page, pageSize, cancellationToken);
+            return _mapper.MapPagedResult<Workshop, WorkshopDisplayDto>(pagedWorkshops);
         }
 
         public async Task<PagedResultDto<WorkshopDisplayDto>> GetWorkshopAsync(
