@@ -54,8 +54,6 @@ CREATE TABLE Workshops
     Title nvarchar(100) NOT NULL,
     Description nvarchar(max),
     Location nvarchar(256) NOT NULL,
-    InstructorName nvarchar(100) NOT NULL,
-    InstructorImgLink varchar(256),
     CategoryId int NOT NULL,
     Duration int NOT NULL, -- in minutes
     LevelId int NOT NULL,
@@ -214,13 +212,11 @@ SELECT @lvlAdv = Id FROM WorkshopLevels WHERE Name = 'Advanced';
 -- Insert two sample workshops (hosts are existing users). Capture ids.
 DECLARE @wk1 INT, @wk2 INT;
 
-INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+INSERT INTO Workshops (Title, Description, Location, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
 VALUES (
     'Intro to Modern C# (.NET 8)',
     'A hands-on workshop covering modern C# features and building a small web API on .NET 8.',
     'Room A - Building 1',
-    'host1',
-    'https://via.placeholder.com/150',
     @catProg,
     120,
     @lvlElem,
@@ -231,13 +227,11 @@ VALUES (
 );
 SET @wk1 = SCOPE_IDENTITY();
 
-INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+INSERT INTO Workshops (Title, Description, Location, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
 VALUES (
     'Landscape Photography Basics',
     'Learn composition, camera settings, and editing for striking landscape photos.',
     'Studio 2 - Photography Wing',
-    'host2',
-    'https://via.placeholder.com/150',
     @catPhoto,
     90,
     @lvlInter,
@@ -362,13 +356,11 @@ SELECT @maybe_host2 = Id FROM Users WHERE Email = 'host2@example.com';
 DECLARE @wk3 INT, @wk4 INT, @wk5 INT, @wk6 INT, @wk7 INT, @wk8 INT, @wk9 INT;
 
 -- Advanced ASP.NET Performance (Programming, advanced, long duration, multiple ticket prices)
-INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+INSERT INTO Workshops (Title, Description, Location, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
 VALUES (
     'Advanced ASP.NET Performance',
     'Deep dive: profiling, caching, and high throughput patterns for ASP.NET on .NET 8.',
     'Room B - Building 1',
-    'host1',
-    'https://via.placeholder.com/150',
     @catProg,
     180,
     @lvlAdv,
@@ -380,13 +372,11 @@ VALUES (
 SET @wk3 = SCOPE_IDENTITY();
 
 -- Watercolor for Beginners (Art, elementary, short duration)
-INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+INSERT INTO Workshops (Title, Description, Location, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
 VALUES (
     'Watercolor for Beginners',
     'Hands-on introduction to watercolor techniques, brushes, and color mixing.',
     'Studio 1 - Art Wing',
-    'host2',
-    'https://via.placeholder.com/150',
     @catArt,
     90,
     @lvlElem,
@@ -398,13 +388,11 @@ VALUES (
 SET @wk4 = SCOPE_IDENTITY();
 
 -- Guitar Basics (Music, elementary, short)
-INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+INSERT INTO Workshops (Title, Description, Location, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
 VALUES (
     'Guitar Basics: First Chords',
     'Learn open chords, strumming patterns, and play your first song.',
     'Music Room - Building 2',
-    'host1',
-    'https://via.placeholder.com/150',
     @catMusic,
     60,
     @lvlElem,
@@ -416,13 +404,11 @@ VALUES (
 SET @wk5 = SCOPE_IDENTITY();
 
 -- Sourdough Baking (Cooking, intermediate) - include mixed ticket prices and reviews
-INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+INSERT INTO Workshops (Title, Description, Location, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
 VALUES (
     'Sourdough Baking: From Starter to Loaf',
     'Fermentation, starter maintenance, shaping and scoring techniques.',
     'Kitchen 3 - Culinary Center',
-    'host2',
-    'https://via.placeholder.com/150',
     @catCooking,
     240,
     @lvlInter,
@@ -434,13 +420,11 @@ VALUES (
 SET @wk6 = SCOPE_IDENTITY();
 
 -- UX Design Crash (Design, intermediate) - will have schedules but NO tickets to test exclusion
-INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+INSERT INTO Workshops (Title, Description, Location, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
 VALUES (
     'UX Design Crash Course',
     'Rapid introduction into user research, wireframes and prototyping.',
     'Room C - Building 3',
-    'host1',
-    'https://via.placeholder.com/150',
     @catDesign,
     120,
     @lvlInter,
@@ -452,13 +436,11 @@ VALUES (
 SET @wk7 = SCOPE_IDENTITY();
 
 -- Night Photography Advanced (Photography, advanced) - different language to test language field
-INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+INSERT INTO Workshops (Title, Description, Location, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
 VALUES (
     'Night Photography: Advanced Techniques',
     'Long exposure, star trails, and light painting.',
     'Outdoor Terrace - Photography Wing',
-    'host2',
-    'https://via.placeholder.com/150',
     @catPhoto,
     150,
     @lvlAdv,
@@ -470,13 +452,11 @@ VALUES (
 SET @wk8 = SCOPE_IDENTITY();
 
 -- Draft / awaiting workshop (should be excluded by status)
-INSERT INTO Workshops (Title, Description, Location, InstructorName, InstructorImgLink, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
+INSERT INTO Workshops (Title, Description, Location, CategoryId, Duration, LevelId, Language, CreatedBy, Status, ThumbnailLink)
 VALUES (
     'Cooking: Seasonal Salads (Draft)',
     'Draft workshop not yet visible publicly.',
     'Kitchen 1 - Culinary Center',
-    'host1',
-    'https://via.placeholder.com/150',
     @catCooking,
     45,
     @lvlElem,

@@ -9,6 +9,7 @@ namespace EXE201_Backend.Repositories
         Task DeleteAsync(int id, CancellationToken cancellationToken = default);
         Task<List<WorkshopReview>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<PagedResultDto<WorkshopReview>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default);
+        Task<PagedResultDto<WorkshopReview>> GetByHostIdAsync(int hostId, int page, int pageSize, CancellationToken cancellationToken = default);
         Task<WorkshopReview?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<PagedResultDto<WorkshopReview>> GetByWorkshopIdAsync(int workshopId, int page, int pageSize, CancellationToken cancellationToken = default);
         Task<int> SaveAsync(CancellationToken cancellationToken = default);
