@@ -1,4 +1,4 @@
-﻿namespace EXE201_Backend.Services
+namespace EXE201_Backend.Services
 {
     public class ImageService : IImageService
     {
@@ -19,16 +19,16 @@
         private class ImageUploadTracker
         {
             public DateTime UploadTime { get; init; }
-            public bool IsExpired => UploadTime.AddSeconds(_expireSec) < _timeProvider.Now;
+            public bool IsExpired => UploadTime.AddSeconds(_expireSec) < (_timeProvider?.Now ?? DateTime.Now);
             public int CustomerId { get; init; }
             public string ImageName { get; init; } = null!;
 
-            private static ITimeProvider _timeProvider = null!;
+            private static ITimeProvider? _timeProvider;
             private static int _expireSec;
 
             public ImageUploadTracker()
             {
-                UploadTime = _timeProvider.Now;
+                UploadTime = _timeProvider?.Now ?? DateTime.Now;
             }
 
             public static void Initialize(ITimeProvider timeProvider, int expireInSecs)
