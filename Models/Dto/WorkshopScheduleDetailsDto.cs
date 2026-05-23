@@ -3,11 +3,9 @@
     public class WorkshopScheduleDetailsDto
     {
         public int Id { get; set; }
-        public int WorkshopId { get; set; }
         public DateOnly StartOn { get; set; }
         public string WorkshopTitle { get; set; } = null!;
         public string? WorkshopThumbnailLink { get; set; }
-        public string WorkshopInstructorName { get; set; } = null!;
         public string WorkshopLocation { get; set; } = null!;
         public IEnumerable<WorkshopTicketDto> Tickets { get; set; } = null!;
     }
