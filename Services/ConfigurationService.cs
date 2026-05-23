@@ -20,7 +20,7 @@ namespace EXE201_Backend.Services
         public string SE_MERCHANT { get; set; } = default!;
         public string SE_SECRET { get; set; } = default!;
         public string DATABASE_CONNECTION { get; set; } = default!;
-        public string IMAGE_DIR { get; set; } = default!;
+        public string IMAGE_DIR { get; set; } = Path.Combine(AppContext.BaseDirectory, "images");
         public int IMAGE_EXPIRE_SEC { get; set; } = default!;
         public string SMTP_SERVER { get; set; } = default!;
         public int SMTP_PORT { get; set; } = default!;

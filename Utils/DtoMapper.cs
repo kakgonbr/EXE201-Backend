@@ -1,5 +1,6 @@
 using EXE201_Backend.Models;
 using EXE201_Backend.Models.Dto;
+using System.Linq;
 
 namespace EXE201_Backend.Utils
 {
@@ -10,6 +11,7 @@ namespace EXE201_Backend.Utils
             CreateMap<User, UserDto>();
 
             CreateMap<Workshop, WorkshopDisplayDto>()
+                .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
                 .ForMember(d => d.Category, opt => opt.MapFrom(s => s.Category != null ? s.Category.Name : string.Empty))
                 .ForMember(d => d.Level, opt => opt.MapFrom(s => s.Level != null ? s.Level.Name : string.Empty))
                 .ForMember(d => d.NextSchedule, opt => opt.MapFrom(s =>
@@ -47,8 +49,13 @@ namespace EXE201_Backend.Utils
                         : 0m));
 
             CreateMap<Workshop, WorkshopDetailsDto>()
+                .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
                 .ForMember(d => d.Category, opt => opt.MapFrom(s => s.Category != null ? s.Category.Name : string.Empty))
                 .ForMember(d => d.Level, opt => opt.MapFrom(s => s.Level != null ? s.Level.Name : string.Empty))
+                .ForMember(d => d.Images, opt => opt.MapFrom(s =>
+                    s.WorkshopImages != null
+                        ? s.WorkshopImages.Select(i => i.ImgLink)
+                        : Enumerable.Empty<string>()))
                 .ForMember(d => d.Schedules, opt => opt.MapFrom(s =>
                     s.WorkshopSchedules == null || s.WorkshopSchedules.Count == 0
                         ? new List<WorkshopSchedule>()
