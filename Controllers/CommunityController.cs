@@ -17,7 +17,7 @@ namespace EXE201_Backend.Controllers
             _communityService = communityService;
         }
 
-        [Authorize]
+        [Authorize(Roles = "host")]
         [HttpPost("reviews/{reviewId}/respond")]
         public async Task<IActionResult> PostWorkshopReviewResponse([FromBody] WorkshopReviewResponseRequest responseRequest, [FromRoute] int reviewId, CancellationToken cancellationToken = default)
         {
@@ -57,6 +57,24 @@ namespace EXE201_Backend.Controllers
         {
             var reviews = await _communityService.GetWorkshopReviewsAsync(workshopId, page, pageSize, cancellationToken);
 
+            if (reviews == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(reviews);
+        }
+
+        [Authorize(Roles = "host")]
+        [HttpGet("reviews")]
+        public async Task<IActionResult> GetAllReviews([FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+        {
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var parsedUserId))
+            {
+                return Unauthorized();
+            }
+
+            var reviews = await _communityService.GetHostReviewsAsync(parsedUserId, page, pageSize, cancellationToken);
             if (reviews == null)
             {
                 return NotFound();

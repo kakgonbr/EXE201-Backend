@@ -62,6 +62,15 @@ namespace EXE201_Backend.Repositories
                 .ToPagedResultAsync(page, pageSize, cancellationToken);
         }
 
+        public async Task<PagedResultDto<WorkshopReview>> GetByHostIdAsync(int hostId, int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            return await _db.WorkshopReviews
+                .Include(wr => wr.Workshop)
+                .Where(wr => wr.Workshop.CreatedBy == hostId)
+                .Include(wr => wr.User)
+                .ToPagedResultAsync(page, pageSize, cancellationToken);
+        }
+
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
         {
             return await _db.SaveChangesAsync(cancellationToken);

@@ -117,5 +117,11 @@ namespace EXE201_Backend.Services
             var reviews = await _workshopReviewRepository.GetByWorkshopIdAsync(workshopId, page, pageSize, cancellationToken);
             return _mapper.MapPagedResult<WorkshopReview, WorkshopReviewDto>(reviews);
         }
+
+        public async Task<PagedResultDto<WorkshopReviewDto>> GetHostReviewsAsync(int hostId, int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            var reviews = await _workshopReviewRepository.GetByHostIdAsync(hostId, page, pageSize, cancellationToken);
+            return _mapper.MapPagedResult<WorkshopReview, WorkshopReviewDto>(reviews);
+        }
     }
 }
