@@ -65,8 +65,20 @@ namespace EXE201_Backend.Controllers
             [FromQuery] int pageSize = 10,
             CancellationToken cancellationToken = default)
         {
-            var result = await _workshopService.GetAllWorkshopsAsync(status, page, pageSize, cancellationToken);
-            return Ok(result);
+            try
+            {
+                var result = await _workshopService.GetAllWorkshopsAsync(status, page, pageSize, cancellationToken);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    error = ex.Message,
+                    detail = ex.InnerException?.Message,
+                    stackTrace = ex.StackTrace
+                });
+            }
         }
 
         [HttpGet("search")]
