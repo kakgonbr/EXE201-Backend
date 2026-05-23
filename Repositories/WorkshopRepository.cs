@@ -69,10 +69,18 @@ namespace EXE201_Backend.Repositories
             }
         }
 
-        public async Task<PagedResultDto<Workshop>> GetAllPagedAsync(int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<Workshop>> GetAllPagedAsync(string? status = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
         {
             var query = _db.Workshops
-                .AsNoTracking()
+                .AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                var trimmedStatus = status.Trim().ToLower();
+                query = query.Where(w => w.Status == trimmedStatus);
+            }
+
+            query = query
                 .Include(w => w.Category)
                 .Include(w => w.Level)
                 .Include(w => w.WorkshopReviews)

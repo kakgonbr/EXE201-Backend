@@ -151,9 +151,10 @@ namespace EXE201_Backend.Services
             return workshop.Id;
         }
 
-        public async Task<PagedResultDto<WorkshopDetailsDto>> GetAllWorkshopsAsync(int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<WorkshopDetailsDto>> GetAllWorkshopsAsync(string? status = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
         {
             var workshops = await _workshopRepository.GetAllPagedAsync(
+                status,
                 page,
                 pageSize,
                 cancellationToken
