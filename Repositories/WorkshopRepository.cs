@@ -30,17 +30,21 @@ namespace EXE201_Backend.Repositories
 
         public async Task<Workshop?> GetByIdAsync(int id, int? userId, CancellationToken cancellationToken = default)
         {
-            return await _db.Workshops
+            IQueryable<Workshop> query = _db.Workshops
                 .Include(w => w.Category)
                 .Include(w => w.Level)
-                .Include(w => w.CreatedByNavigation)
                 .Include(w => w.WorkshopReviews!)
                 .Include(w => w.WorkshopImages!)
                 .Include(w => w.WorkshopSchedules!)
                     .ThenInclude(ws => ws.WorkshopTickets)
-                        .ThenInclude(wt => wt.WorkshopParticipants)
-                .Include(w => w.Users.Where(u => u.Id == userId))
-                .SingleOrDefaultAsync(w => w.Id == id, cancellationToken);
+                        .ThenInclude(wt => wt.WorkshopParticipants);
+
+            if (userId.HasValue && userId.Value > 0)
+            {
+                query = query.Include(w => w.Users.Where(u => u.Id == userId.Value));
+            }
+
+            return await query.SingleOrDefaultAsync(w => w.Id == id, cancellationToken);
         }
 
         public async Task AddAsync(Workshop workshop, CancellationToken cancellationToken = default)
@@ -65,32 +69,63 @@ namespace EXE201_Backend.Repositories
             }
         }
 
-        public async Task<IEnumerable<Workshop>> GetAllAsync(CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<Workshop>> GetAllPagedAsync(int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
         {
-            return await _db.Workshops.ToListAsync(cancellationToken);
-        }
-
-        public async Task<PagedResultDto<Workshop>> GetAllWorkshopsAsync(string? status = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
-        {
-            IQueryable<Workshop> q = _db.Workshops
-                .AsQueryable()
+            var query = _db.Workshops
+                .AsNoTracking()
                 .Include(w => w.Category)
                 .Include(w => w.Level)
-                .Include(w => w.CreatedByNavigation)
-                .Include(w => w.WorkshopReviews!)
-                .Include(w => w.WorkshopImages!)
-                .Include(w => w.WorkshopSchedules!)
-                    .ThenInclude(ws => ws.WorkshopTickets);
+                .Include(w => w.WorkshopReviews)
+                .Include(w => w.WorkshopImages)
+                .Include(w => w.WorkshopSchedules)
+                    .ThenInclude(ws => ws.WorkshopTickets)
+                        .ThenInclude(wt => wt.WorkshopParticipants)
+                .OrderByDescending(w => w.CreatedOn);
 
-            if (!string.IsNullOrWhiteSpace(status))
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            var data = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return new PagedResultDto<Workshop>
             {
-                var trimmed = status.Trim();
-                q = q.Where(w => w.Status == trimmed);
-            }
+                Data = data.AsReadOnly(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
+        }
 
-            q = q.OrderByDescending(w => w.CreatedOn);
+        public async Task<PagedResultDto<Workshop>> GetByUserIdPagedAsync(int userId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+        {
+            var query = _db.Workshops
+                .AsNoTracking()
+                .Where(w => w.CreatedBy == userId)
+                .Include(w => w.Category)
+                .Include(w => w.Level)
+                .Include(w => w.WorkshopReviews)
+                .Include(w => w.WorkshopImages)
+                .Include(w => w.WorkshopSchedules)
+                    .ThenInclude(ws => ws.WorkshopTickets)
+                        .ThenInclude(wt => wt.WorkshopParticipants)
+                .OrderByDescending(w => w.CreatedOn);
 
-            return await q.ToPagedResultAsync(page, pageSize, cancellationToken);
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            var data = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return new PagedResultDto<Workshop>
+            {
+                Data = data.AsReadOnly(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
@@ -103,12 +138,12 @@ namespace EXE201_Backend.Repositories
             var user = userId == null ? null : await _db.Users
                 .Include(u => u.WorkshopParticipants.Where(wp => wp.Status == "paid"))
                     .ThenInclude(wp => wp.Ticket)
-                        .ThenInclude(wp => wp.WorkshopSchedule)
+                        .ThenInclude(t => t.WorkshopSchedule)
                             .ThenInclude(ws => ws.Workshop)
                                 .ThenInclude(w => w.Category)
                 .Include(u => u.WorkshopParticipants.Where(wp => wp.Status == "paid"))
                     .ThenInclude(wp => wp.Ticket)
-                        .ThenInclude(wp => wp.WorkshopSchedule)
+                        .ThenInclude(t => t.WorkshopSchedule)
                             .ThenInclude(ws => ws.Workshop)
                                 .ThenInclude(w => w.Level)
                 .SingleOrDefaultAsync(u => u.Id == userId, cancellationToken);
@@ -119,7 +154,6 @@ namespace EXE201_Backend.Repositories
                     && w.WorkshopSchedules.Any(ws => ws.StartOn > DateOnly.FromDateTime(_timeProvider.Now) && ws.WorkshopTickets.Count != 0))
                 .Include(w => w.Category)
                 .Include(w => w.Level)
-                .Include(w => w.CreatedByNavigation)
                 .Include(w => w.WorkshopReviews!)
                 .Include(w => w.WorkshopImages!)
                 .Include(w => w.WorkshopSchedules!)
@@ -133,6 +167,7 @@ namespace EXE201_Backend.Repositories
 
             var preferredCategories = user.WorkshopParticipants.Select(wp => wp.Ticket.WorkshopSchedule.Workshop.Category.Name).Distinct().ToList();
             var preferredLevels = user.WorkshopParticipants.Select(wp => wp.Ticket.WorkshopSchedule.Workshop.Level.Name).Distinct().ToList();
+
             IQueryable<Workshop> recommendations = _db.Workshops
                 .Where(w => w.Status == "verified"
                     && w.WorkshopSchedules.Count != 0
@@ -141,14 +176,17 @@ namespace EXE201_Backend.Repositories
                     && !w.Users.Any(u => u.Id == userId))
                 .Include(w => w.Category)
                 .Include(w => w.Level)
-                .Include(w => w.CreatedByNavigation)
-                .Include(w => w.Users.Where(u => u.Id == userId))
                 .Include(w => w.WorkshopReviews!)
                 .Include(w => w.WorkshopImages!)
                 .Include(w => w.WorkshopSchedules!)
                 .Take(4);
 
-            if (!recommendations.Any())
+            if (userId.HasValue && userId.Value > 0)
+            {
+                recommendations = recommendations.Include(w => w.Users.Where(u => u.Id == userId.Value));
+            }
+
+            if (!await recommendations.AnyAsync(cancellationToken))
             {
                 return await randomWorkshops.ToListAsync(cancellationToken);
             }
@@ -182,10 +220,13 @@ namespace EXE201_Backend.Repositories
                 )
                 .Include(w => w.Category)
                 .Include(w => w.Level)
-                .Include(w => w.CreatedByNavigation)
-                .Include(w => w.Users.Where(u => u.Id == userId))
                 .Include(w => w.WorkshopReviews!)
                 .Include(w => w.WorkshopImages!);
+
+            if (userId > 0)
+            {
+                q = q.Include(w => w.Users.Where(u => u.Id == userId));
+            }
 
             if (!string.IsNullOrWhiteSpace(query))
             {
@@ -194,8 +235,8 @@ namespace EXE201_Backend.Repositories
                 q = q.Where(w =>
                     EF.Functions.Like(w.Title, like) ||
                     (!string.IsNullOrEmpty(w.Description) && EF.Functions.Like(w.Description!, like)) ||
-                    EF.Functions.Like(w.CreatedByNavigation.Name, like) ||
-                    (w.Category != null && EF.Functions.Like(w.Category.Name, like))
+                    (w.Category != null && EF.Functions.Like(w.Category.Name, like)) ||
+                    (w.CreatedByNavigation != null && EF.Functions.Like(w.CreatedByNavigation.Name, like))
                 );
             }
 
