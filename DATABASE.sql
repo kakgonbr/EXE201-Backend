@@ -1,4 +1,4 @@
-﻿USE master
+USE master
 GO
 IF EXISTS (SELECT *
            FROM sys.databases
