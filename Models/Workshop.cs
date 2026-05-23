@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace EXE201_Backend.Models;
@@ -14,10 +14,6 @@ public partial class Workshop
     public string? Description { get; set; }
 
     public string Location { get; set; } = null!;
-
-    public string InstructorName { get; set; } = null!;
-
-    public string? InstructorImgLink { get; set; }
 
     public int CategoryId { get; set; }
 

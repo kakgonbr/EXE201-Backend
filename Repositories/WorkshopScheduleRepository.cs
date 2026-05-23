@@ -1,4 +1,4 @@
-﻿using EXE201_Backend.Data;
+using EXE201_Backend.Data;
 using EXE201_Backend.Extensions;
 using EXE201_Backend.Models;
 using EXE201_Backend.Models.Dto;
@@ -22,6 +22,7 @@ namespace EXE201_Backend.Repositories
         {
             return await _db.WorkshopSchedules
                 .Include(ws => ws.Workshop)
+                    .ThenInclude(w => w.CreatedByNavigation)
                 .Include(ws => ws.WorkshopTickets)
                     .ThenInclude(wt => wt.WorkshopParticipants)
                 .SingleOrDefaultAsync(ws => ws.Id == id, cancellationToken);
@@ -71,6 +72,7 @@ namespace EXE201_Backend.Repositories
             var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
             return await _db.WorkshopSchedules
                 .Include(ws => ws.Workshop)
+                    .ThenInclude(w => w.CreatedByNavigation)
                 .Include(ws => ws.WorkshopTickets)
                     .ThenInclude(wt => wt.WorkshopParticipants)
                 .Where(ws =>
@@ -108,6 +110,8 @@ namespace EXE201_Backend.Repositories
                     .ThenInclude(w => w.Category)
                 .Include(ws => ws.Workshop)
                     .ThenInclude(w => w.Level)
+                .Include(ws => ws.Workshop)
+                    .ThenInclude(w => w.CreatedByNavigation)
                 .Include(ws => ws.WorkshopTickets)
                     .ThenInclude(wt => wt.WorkshopParticipants)
                 .Where(ws =>

@@ -33,6 +33,7 @@ namespace EXE201_Backend.Repositories
             return await _db.Workshops
                 .Include(w => w.Category)
                 .Include(w => w.Level)
+                .Include(w => w.CreatedByNavigation)
                 .Include(w => w.WorkshopReviews!)
                 .Include(w => w.WorkshopImages!)
                 .Include(w => w.WorkshopSchedules!)
@@ -75,6 +76,7 @@ namespace EXE201_Backend.Repositories
                 .AsQueryable()
                 .Include(w => w.Category)
                 .Include(w => w.Level)
+                .Include(w => w.CreatedByNavigation)
                 .Include(w => w.WorkshopReviews!)
                 .Include(w => w.WorkshopImages!)
                 .Include(w => w.WorkshopSchedules!)
@@ -117,6 +119,7 @@ namespace EXE201_Backend.Repositories
                     && w.WorkshopSchedules.Any(ws => ws.StartOn > DateOnly.FromDateTime(_timeProvider.Now) && ws.WorkshopTickets.Count != 0))
                 .Include(w => w.Category)
                 .Include(w => w.Level)
+                .Include(w => w.CreatedByNavigation)
                 .Include(w => w.WorkshopReviews!)
                 .Include(w => w.WorkshopImages!)
                 .Include(w => w.WorkshopSchedules!)
@@ -138,6 +141,7 @@ namespace EXE201_Backend.Repositories
                     && !w.Users.Any(u => u.Id == userId))
                 .Include(w => w.Category)
                 .Include(w => w.Level)
+                .Include(w => w.CreatedByNavigation)
                 .Include(w => w.Users.Where(u => u.Id == userId))
                 .Include(w => w.WorkshopReviews!)
                 .Include(w => w.WorkshopImages!)
@@ -178,6 +182,7 @@ namespace EXE201_Backend.Repositories
                 )
                 .Include(w => w.Category)
                 .Include(w => w.Level)
+                .Include(w => w.CreatedByNavigation)
                 .Include(w => w.Users.Where(u => u.Id == userId))
                 .Include(w => w.WorkshopReviews!)
                 .Include(w => w.WorkshopImages!);
@@ -189,7 +194,7 @@ namespace EXE201_Backend.Repositories
                 q = q.Where(w =>
                     EF.Functions.Like(w.Title, like) ||
                     (!string.IsNullOrEmpty(w.Description) && EF.Functions.Like(w.Description!, like)) ||
-                    EF.Functions.Like(w.InstructorName, like) ||
+                    EF.Functions.Like(w.CreatedByNavigation.Name, like) ||
                     (w.Category != null && EF.Functions.Like(w.Category.Name, like))
                 );
             }
