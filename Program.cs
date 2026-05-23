@@ -2,7 +2,6 @@ using EXE201_Backend.Data;
 using EXE201_Backend.Repositories;
 using EXE201_Backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -49,11 +48,9 @@ namespace EXE201_Backend
                         Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY")!))
             };
 
-            var configurationService = new ConfigurationService();
-
             builder.Services
                 .AddSingleton<ITimeProvider, TimeMachine>()
-                .AddSingleton<IConfigurationService>(configurationService)
+                .AddSingleton<IConfigurationService, ConfigurationService>()
                 .AddScoped<IUserRepository, UserRepository>()
                 .AddScoped<IImageService, ImageService>()
                 .AddScoped<IUserService, UserService>()
@@ -100,12 +97,9 @@ namespace EXE201_Backend
 
             var app = builder.Build();
 
-            var imageDir = configurationService.IMAGE_DIR;
-            Directory.CreateDirectory(imageDir);
-
             app.UseStaticFiles(new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(Path.GetFullPath(imageDir)),
+                FileProvider = new PhysicalFileProvider(Environment.GetEnvironmentVariable("IMAGE_DIR")!),
                 RequestPath = "/images"
             });
 
