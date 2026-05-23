@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using EXE201_Backend.Models;
 using Microsoft.EntityFrameworkCore;
@@ -115,10 +115,7 @@ public partial class ExeContext : DbContext
             entity.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.InstructorImgLink)
-                .HasMaxLength(256)
-                .IsUnicode(false);
-            entity.Property(e => e.InstructorName).HasMaxLength(100);
+
             entity.Property(e => e.Language)
                 .HasMaxLength(2)
                 .IsUnicode(false)
