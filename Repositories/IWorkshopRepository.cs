@@ -7,7 +7,8 @@ namespace EXE201_Backend.Repositories
     {
         Task AddAsync(Workshop workshop, CancellationToken cancellationToken = default);
         Task DeleteAsync(int id, CancellationToken cancellationToken = default);
-        Task<IEnumerable<Workshop>> GetAllAsync(CancellationToken cancellationToken = default);
+        Task<PagedResultDto<Workshop>> GetAllPagedAsync(int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);
+        Task<PagedResultDto<Workshop>> GetByUserIdPagedAsync(int userId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);
         Task<Workshop?> GetByIdAsync(int id, int? userId = null, CancellationToken cancellationToken = default);
         Task<IEnumerable<Workshop>> GetRecommendationsAsync(int? userId, CancellationToken cancellationToken = default);
         Task<int> SaveAsync(CancellationToken cancellationToken = default);

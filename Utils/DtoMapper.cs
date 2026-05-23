@@ -33,9 +33,9 @@ namespace EXE201_Backend.Utils
                 .ForMember(d => d.Liked, opt => opt.MapFrom(s => s.Users != null && s.Users.Any()));
 
             CreateMap<WorkshopSchedule, WorkshopScheduleDto>()
-                .ForMember(d => d.RemainingTickets, opt => opt.MapFrom(s => 
-                    (s.WorkshopTickets != null) 
-                        ? s.WorkshopTickets.Sum(wt => wt.MaxTickets) - s.WorkshopTickets.SelectMany(wt => wt.WorkshopParticipants).Where(wp => wp.Status == "paid").Count() 
+                .ForMember(d => d.RemainingTickets, opt => opt.MapFrom(s =>
+                    (s.WorkshopTickets != null)
+                        ? s.WorkshopTickets.Sum(wt => wt.MaxTickets) - s.WorkshopTickets.SelectMany(wt => wt.WorkshopParticipants).Where(wp => wp.Status == "paid").Count()
                         : 0))
                 .ForMember(d => d.PriceLower, opt => opt.MapFrom(s =>
                     (s.WorkshopTickets != null && s.WorkshopTickets.Any())
@@ -51,7 +51,7 @@ namespace EXE201_Backend.Utils
                 .ForMember(d => d.Level, opt => opt.MapFrom(s => s.Level != null ? s.Level.Name : string.Empty))
                 .ForMember(d => d.Schedules, opt => opt.MapFrom(s =>
                     s.WorkshopSchedules == null || s.WorkshopSchedules.Count == 0
-                        ? new List<WorkshopSchedule>() 
+                        ? new List<WorkshopSchedule>()
                         : s.WorkshopSchedules))
                 .ForMember(d => d.Rating, opt => opt.MapFrom(s =>
                     (s.WorkshopReviews != null && s.WorkshopReviews.Any())
@@ -61,8 +61,11 @@ namespace EXE201_Backend.Utils
                 .ForMember(d => d.Liked, opt => opt.MapFrom(s => s.Users != null && s.Users.Any()));
 
             CreateMap<WorkshopTicket, WorkshopTicketDto>()
-                .ForMember(d => d.RemainingTickets, opt => opt.MapFrom(s =>
-                    s.MaxTickets - s.WorkshopParticipants.Count(wp => wp.Status == "paid")));
+    .ForMember(d => d.RemainingTickets, opt => opt.MapFrom(s =>
+        s.MaxTickets -
+        (s.WorkshopParticipants != null
+            ? s.WorkshopParticipants.Count(wp => wp.Status == "paid")
+            : 0)));
 
             CreateMap<WorkshopSchedule, WorkshopScheduleDetailsDto>()
                 .ForMember(d => d.Tickets, opt => opt.MapFrom(s =>
@@ -71,7 +74,6 @@ namespace EXE201_Backend.Utils
                         : s.WorkshopTickets))
                 .ForMember(d => d.WorkshopTitle, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Title : string.Empty))
                 .ForMember(d => d.WorkshopThumbnailLink, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.ThumbnailLink : string.Empty))
-                .ForMember(d => d.WorkshopInstructorName, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.InstructorName : string.Empty))
                 .ForMember(d => d.WorkshopLocation, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Location : string.Empty));
         }
     }

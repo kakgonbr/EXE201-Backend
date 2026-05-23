@@ -15,9 +15,6 @@ public partial class Workshop
 
     public string Location { get; set; } = null!;
 
-    public string InstructorName { get; set; } = null!;
-
-    public string? InstructorImgLink { get; set; }
 
     public int CategoryId { get; set; }
 
