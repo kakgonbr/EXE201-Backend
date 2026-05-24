@@ -8,6 +8,7 @@ namespace EXE201_Backend.Models.Dto
         public string? Description { get; set; } = null!;
         public string Language { get; set; } = null!;
         public string Location { get; set; } = null!;
+        public string Status { get; set; } = string.Empty;
         public string Category { get; set; } = null!;
         public string Status { get; set; } = string.Empty;
         public DateOnly NextSchedule { get; set; }

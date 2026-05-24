@@ -64,6 +64,7 @@ namespace EXE201_Backend.Utils
                 .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
                 .ForMember(d => d.Category, opt => opt.MapFrom(s => s.Category != null ? s.Category.Name : string.Empty))
                 .ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status))
+
                 .ForMember(d => d.Level, opt => opt.MapFrom(s => s.Level != null ? s.Level.Name : string.Empty))
                 .ForMember(d => d.Images, opt => opt.MapFrom(s =>
                     s.WorkshopImages != null
@@ -77,8 +78,6 @@ namespace EXE201_Backend.Utils
                     (s.WorkshopReviews != null && s.WorkshopReviews.Any())
                         ? s.WorkshopReviews.Average(r => (double)r.Rating)
                         : 0.0))
-                .ForMember(d => d.InstructorName, opt => opt.MapFrom(s => s.CreatedByNavigation != null ? s.CreatedByNavigation.Name : string.Empty))
-                .ForMember(d => d.InstructorImgLink, opt => opt.MapFrom(s => s.CreatedByNavigation != null ? s.CreatedByNavigation.AvatarLink : null))
                 .ForMember(d => d.ReviewCount, opt => opt.MapFrom(s => s.WorkshopReviews != null ? s.WorkshopReviews.Count : 0))
                 .ForMember(d => d.Liked, opt => opt.MapFrom(s => s.Users != null && s.Users.Any()));
 
