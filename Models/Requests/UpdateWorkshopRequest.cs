@@ -17,16 +17,16 @@ namespace EXE201_Backend.Models.Requests
 
     public class UpdateWorkshopScheduleRequest
     {
-        public string StartOn { get; set; } = string.Empty;
+        public string? StartOn { get; set; }
         public List<UpdateWorkshopTicketRequest>? Tickets { get; set; }
     }
 
     public class UpdateWorkshopTicketRequest
     {
-        public string TicketType { get; set; } = "standard";
-        public string StartTime { get; set; } = string.Empty;
-        public string EndTime { get; set; } = string.Empty;
-        public int MaxTickets { get; set; }
-        public decimal Price { get; set; }
+        public string? TicketType { get; set; }
+        public string? StartTime { get; set; }
+        public string? EndTime { get; set; }
+        public int? MaxTickets { get; set; }
+        public decimal? Price { get; set; }
     }
 }

@@ -1048,3 +1048,27 @@ VALUES (
 GO
 ALTER TABLE WorkshopSchedules DROP CONSTRAINT ck_workshopschedule_time;
 ALTER TABLE WorkshopSchedules
+---
+USE [EXE-HH];
+GO
+
+IF EXISTS (
+    SELECT 1
+    FROM sys.check_constraints
+    WHERE name = 'ck_workshop_status'
+)
+BEGIN
+    ALTER TABLE dbo.Workshops DROP CONSTRAINT ck_workshop_status;
+END
+GO
+
+ALTER TABLE dbo.Workshops
+ADD CONSTRAINT ck_workshop_status
+CHECK (
+    [Status] = 'ended'
+    OR [Status] = 'removed'
+    OR [Status] = 'verified'
+    OR [Status] = 'draft'
+    OR [Status] = 'pending'
+);
+GO
