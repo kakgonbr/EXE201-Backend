@@ -15,6 +15,6 @@
         public int ReviewCount { get; set; }
         public bool Liked { get; set; }
         public IEnumerable<string> Images { get; set; } = null!;
-        public IEnumerable<WorkshopScheduleDto> Schedules { get; set; } = null!;
+        public IEnumerable<WorkshopScheduleDetailsDto> Schedules { get; set; } = null!;
     }
 }
