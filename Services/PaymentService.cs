@@ -124,7 +124,7 @@ namespace EXE201_Backend.Services
                     Operation = "PURCHASE",
                     OrderDescription = $"Payment for Workshop Ticket #{ticketId}",
                     OrderInvoiceNumber = $"INV_{userId}_{ticketId}_{created.Ticks}",
-                    SuccessUrl = _configurationService.SE_RETURN,
+                    SuccessUrl = $"{_configurationService.SE_RETURN}?invoice_num=INV_{userId}_{ticketId}_{created.Ticks}",
                     ErrorUrl = _configurationService.SE_ERROR,
                     CancelUrl = _configurationService.SE_CANCEL
                 };
