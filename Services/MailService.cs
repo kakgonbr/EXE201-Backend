@@ -62,6 +62,21 @@ namespace EXE201_Backend.Services
             return identifier;
         }
 
+        public async Task SendHostRegistration(string to, CancellationToken cancellationToken = default)
+        {
+            await SendEmail(to, "Host Registration Received", $"We have received your registration to become an event host, please check your email regularly for any update.", cancellationToken);
+        }
+
+        public async Task SendHostAccepted(string to, CancellationToken cancellationToken = default)
+        {
+            await SendEmail(to, "Host Registration Approved", $"Congratulations! Your host registration has been approved. You can now log in to your account and start hosting events.", cancellationToken);
+        }
+
+        public async Task SendHostRejected(string to, CancellationToken cancellationToken = default)
+        {
+            await SendEmail(to, "Host Registration Rejected", $"We're sorry to inform you that your host registration has been rejected. If you believe this is an error, please contact support.", cancellationToken);
+        }
+
         public bool IsOtpCorrect(string identifier, string otp)
         {
             CleanupExpiredOtps();

@@ -102,6 +102,12 @@ namespace EXE201_Backend.Utils
                 .ForMember(d => d.ReviewerId, opt => opt.MapFrom(s => s.UserId))
                 .ForMember(d => d.ReviewerAvatarLink, opt => opt.MapFrom(s => s.User != null ? s.User.AvatarLink : string.Empty))
                 .ForMember(d => d.WorkshopName, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Title : string.Empty));
+
+            CreateMap<HostRegistration, HostRegistrationDto>()
+                .ForMember(d => d.UserName, opt => opt.MapFrom(s => s.User != null ? s.User.Name : string.Empty))
+                .ForMember(d => d.ApprovedBy, opt => opt.MapFrom(s => s.ApprovedByNavigation != null ? s.ApprovedByNavigation.Name : string.Empty))
+                .ForMember(d => d.UserAvatarUrl, opt => opt.MapFrom(s => s.User != null ? s.User.AvatarLink : null))
+                .ForMember(d => d.ApprovedOn, opt => opt.MapFrom(s => s.Approved ? s.CreatedOn : (DateTime?)null));
         }
     }
 }

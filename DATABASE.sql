@@ -166,6 +166,20 @@ CREATE TABLE WorkshopReviews
     CONSTRAINT ck_workshopreview_rating CHECK (Rating >= 0)
 )
 
+CREATE TABLE HostRegistrations
+(
+    Id int IDENTITY(1, 1) PRIMARY KEY,
+    UserId int NOT NULL UNIQUE,
+    Approved bit NOT NULL DEFAULT 0,
+    ApprovedBy int,
+    Note nvarchar(max),
+    CreatedOn datetime NOT NULL DEFAULT GETDATE(),
+    UpdatedOn datetime,
+    
+    CONSTRAINT fk_hostregistration_user FOREIGN KEY (UserId) REFERENCES Users,
+    CONSTRAINT fk_hostregistration_user_approvedby FOREIGN KEY (ApprovedBy) REFERENCES Users
+)
+
 -- Abc@12345
 INSERT INTO Users
 (Email, PhoneNumber, PasswordHash, Role, Name, Verified, IsActive, GoogleUserId)
