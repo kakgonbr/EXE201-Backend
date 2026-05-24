@@ -155,6 +155,8 @@ namespace EXE201_Backend.Services
             }
 
             workshop.Duration = maxDurationMinutes;
+            ValidateWorkshopRequiredFields(workshop);
+
             await _workshopRepository.UpdateAsync(workshop, cancellationToken);
 
             if (request.ImageLinks != null && request.ImageLinks.Any())
@@ -189,6 +191,36 @@ namespace EXE201_Backend.Services
             return _mapper.MapPagedResult<Workshop, WorkshopDetailsDto>(workshops);
         }
 
+        private static void ValidateWorkshopRequiredFields(Workshop workshop)
+        {
+            if (string.IsNullOrWhiteSpace(workshop.Title))
+                throw new ArgumentException("Tên workshop là bắt buộc.");
+
+            if (workshop.CategoryId <= 0)
+                throw new ArgumentException("Danh mục là bắt buộc.");
+
+            var schedule = workshop.WorkshopSchedules?
+                .OrderBy(s => s.StartOn)
+                .FirstOrDefault();
+
+            if (schedule == null)
+                throw new ArgumentException("Lịch trình là bắt buộc.");
+
+            var ticket = schedule.WorkshopTickets?.FirstOrDefault();
+
+            if (ticket == null)
+                throw new ArgumentException("Vé là bắt buộc.");
+
+            if (ticket.EndTime <= ticket.StartTime)
+                throw new ArgumentException("Thời gian kết thúc phải lớn hơn thời gian bắt đầu.");
+
+            if (ticket.Price <= 0)
+                throw new ArgumentException("Giá vé là bắt buộc và phải lớn hơn 0.");
+
+            if (ticket.MaxTickets <= 0)
+                throw new ArgumentException("Số lượng vé là bắt buộc và phải lớn hơn 0.");
+        }
+
         public async Task<bool> UpdateWorkshopAsync(
     int id,
     UpdateWorkshopRequest request,
@@ -209,14 +241,14 @@ namespace EXE201_Backend.Services
             if (!string.IsNullOrWhiteSpace(request.Title))
                 workshop.Title = request.Title.Trim();
 
-            workshop.Description = request.Description?.Trim();
+            if (!string.IsNullOrWhiteSpace(request.Description))
+                workshop.Description = request.Description.Trim();
 
             if (!string.IsNullOrWhiteSpace(request.Location))
                 workshop.Location = request.Location.Trim();
 
-            workshop.ThumbnailLink = string.IsNullOrWhiteSpace(request.ThumbnailLink)
-                ? null
-                : request.ThumbnailLink.Trim();
+            if (!string.IsNullOrWhiteSpace(request.ThumbnailLink))
+                workshop.ThumbnailLink = request.ThumbnailLink.Trim();
 
             if (request.CategoryId.HasValue && request.CategoryId.Value > 0)
                 workshop.CategoryId = request.CategoryId.Value;
@@ -252,11 +284,6 @@ namespace EXE201_Backend.Services
 
             if (scheduleReq != null)
             {
-                if (!DateOnly.TryParse(scheduleReq.StartOn, out var startOn))
-                {
-                    throw new ArgumentException($"Invalid StartOn date: {scheduleReq.StartOn}");
-                }
-
                 workshop.WorkshopSchedules ??= new List<WorkshopSchedule>();
 
                 var schedule = workshop.WorkshopSchedules
@@ -274,18 +301,19 @@ namespace EXE201_Backend.Services
                     workshop.WorkshopSchedules.Add(schedule);
                 }
 
-                schedule.StartOn = startOn;
+                if (!string.IsNullOrWhiteSpace(scheduleReq.StartOn))
+                {
+                    if (!DateOnly.TryParse(scheduleReq.StartOn, out var startOn))
+                    {
+                        throw new ArgumentException($"Invalid StartOn date: {scheduleReq.StartOn}");
+                    }
+                    schedule.StartOn = startOn;
+                }
 
                 var ticketReq = scheduleReq.Tickets?.FirstOrDefault();
 
                 if (ticketReq != null)
                 {
-                    if (!TimeOnly.TryParse(ticketReq.StartTime, out var startTime))
-                        throw new ArgumentException($"Invalid ticket StartTime: {ticketReq.StartTime}");
-
-                    if (!TimeOnly.TryParse(ticketReq.EndTime, out var endTime))
-                        throw new ArgumentException($"Invalid ticket EndTime: {ticketReq.EndTime}");
-
                     schedule.WorkshopTickets ??= new List<WorkshopTicket>();
 
                     var ticket = schedule.WorkshopTickets.FirstOrDefault();
@@ -296,21 +324,41 @@ namespace EXE201_Backend.Services
                         schedule.WorkshopTickets.Add(ticket);
                     }
 
-                    ticket.TicketType = string.IsNullOrWhiteSpace(ticketReq.TicketType)
-                        ? "standard"
-                        : ticketReq.TicketType.Trim();
+                    if (!string.IsNullOrWhiteSpace(ticketReq.TicketType))
+                    {
+                        ticket.TicketType = ticketReq.TicketType.Trim();
+                    }
 
-                    ticket.StartTime = startTime;
-                    ticket.EndTime = endTime;
-                    ticket.MaxTickets = ticketReq.MaxTickets;
-                    ticket.Price = ticketReq.Price;
+                    if (!string.IsNullOrWhiteSpace(ticketReq.StartTime))
+                    {
+                        if (!TimeOnly.TryParse(ticketReq.StartTime, out var startTime))
+                            throw new ArgumentException($"Invalid ticket StartTime: {ticketReq.StartTime}");
+                        ticket.StartTime = startTime;
+                    }
 
-                    var duration = endTime.ToTimeSpan() - startTime.ToTimeSpan();
+                    if (!string.IsNullOrWhiteSpace(ticketReq.EndTime))
+                    {
+                        if (!TimeOnly.TryParse(ticketReq.EndTime, out var endTime))
+                            throw new ArgumentException($"Invalid ticket EndTime: {ticketReq.EndTime}");
+                        ticket.EndTime = endTime;
+                    }
+
+                    if (ticketReq.MaxTickets.HasValue && ticketReq.MaxTickets.Value > 0)
+                    {
+                        ticket.MaxTickets = ticketReq.MaxTickets.Value;
+                    }
+
+                    if (ticketReq.Price.HasValue && ticketReq.Price.Value >= 0)
+                    {
+                        ticket.Price = ticketReq.Price.Value;
+                    }
+
+                    var duration = ticket.EndTime.ToTimeSpan() - ticket.StartTime.ToTimeSpan();
                     workshop.Duration = (int)Math.Max(0, duration.TotalMinutes);
                 }
             }
 
-            await _workshopRepository.SaveAsync(cancellationToken);
+            await _workshopRepository.UpdateAsync(workshop, cancellationToken);
 
             if (request.ImageLinks != null && request.ImageLinks.Any())
             {

@@ -9,6 +9,7 @@
         public TimeOnly StartTime { get; set; }
 
         public TimeOnly EndTime { get; set; }
+        public int MaxTickets { get; set; }
         public int RemainingTickets { get; set; }
         public decimal Price { get; set; }
     }
