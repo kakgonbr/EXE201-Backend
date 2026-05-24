@@ -10,7 +10,6 @@ namespace EXE201_Backend.Models.Dto
         public string Location { get; set; } = null!;
         public string Status { get; set; } = string.Empty;
         public string Category { get; set; } = null!;
-        public string Status { get; set; } = string.Empty;
         public DateOnly NextSchedule { get; set; }
         public int Duration { get; set; }
         public string Level { get; set; } = null!;
