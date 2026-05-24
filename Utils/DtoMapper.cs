@@ -13,6 +13,7 @@ namespace EXE201_Backend.Utils
             CreateMap<Workshop, WorkshopDisplayDto>()
                 .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
                 .ForMember(d => d.Category, opt => opt.MapFrom(s => s.Category != null ? s.Category.Name : string.Empty))
+                .ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status))
                 .ForMember(d => d.Level, opt => opt.MapFrom(s => s.Level != null ? s.Level.Name : string.Empty))
                 .ForMember(d => d.NextSchedule, opt => opt.MapFrom(s =>
                     s.WorkshopSchedules != null && s.WorkshopSchedules.Any()
@@ -27,6 +28,17 @@ namespace EXE201_Backend.Utils
                      s.WorkshopSchedules.SelectMany(s => s.WorkshopTickets ?? Enumerable.Empty<WorkshopTicket>()).Any())
                         ? s.WorkshopSchedules.SelectMany(s => s.WorkshopTickets!).Max(t => t.Price)
                         : 0m))
+                .ForMember(d => d.MaxTickets, opt => opt.MapFrom(s =>
+                    s.WorkshopSchedules
+                        .SelectMany(ws => ws.WorkshopTickets)
+                        .Sum(t => (int?)t.MaxTickets) ?? 0
+                ))
+                .ForMember(d => d.SoldTickets, opt => opt.MapFrom(s => 0))
+                .ForMember(d => d.RemainingTickets, opt => opt.MapFrom(s =>
+                    s.WorkshopSchedules
+                        .SelectMany(ws => ws.WorkshopTickets)
+                        .Sum(t => (int?)t.MaxTickets) ?? 0
+                ))
                 .ForMember(d => d.Rating, opt => opt.MapFrom(s =>
                     (s.WorkshopReviews != null && s.WorkshopReviews.Any())
                         ? s.WorkshopReviews.Average(r => (double)r.Rating)
@@ -51,6 +63,7 @@ namespace EXE201_Backend.Utils
             CreateMap<Workshop, WorkshopDetailsDto>()
                 .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
                 .ForMember(d => d.Category, opt => opt.MapFrom(s => s.Category != null ? s.Category.Name : string.Empty))
+                .ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status))
                 .ForMember(d => d.Level, opt => opt.MapFrom(s => s.Level != null ? s.Level.Name : string.Empty))
                 .ForMember(d => d.Images, opt => opt.MapFrom(s =>
                     s.WorkshopImages != null
