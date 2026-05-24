@@ -64,15 +64,17 @@ namespace EXE201_Backend.Utils
                     (s.WorkshopReviews != null && s.WorkshopReviews.Any())
                         ? s.WorkshopReviews.Average(r => (double)r.Rating)
                         : 0.0))
+                .ForMember(d => d.InstructorName, opt => opt.MapFrom(s => s.CreatedByNavigation != null ? s.CreatedByNavigation.Name : string.Empty))
+                .ForMember(d => d.InstructorImgLink, opt => opt.MapFrom(s => s.CreatedByNavigation != null ? s.CreatedByNavigation.AvatarLink : null))
                 .ForMember(d => d.ReviewCount, opt => opt.MapFrom(s => s.WorkshopReviews != null ? s.WorkshopReviews.Count : 0))
                 .ForMember(d => d.Liked, opt => opt.MapFrom(s => s.Users != null && s.Users.Any()));
 
             CreateMap<WorkshopTicket, WorkshopTicketDto>()
-    .ForMember(d => d.RemainingTickets, opt => opt.MapFrom(s =>
-        s.MaxTickets -
-        (s.WorkshopParticipants != null
-            ? s.WorkshopParticipants.Count(wp => wp.Status == "paid")
-            : 0)));
+                .ForMember(d => d.RemainingTickets, opt => opt.MapFrom(s =>
+                    s.MaxTickets -
+                    (s.WorkshopParticipants != null
+                        ? s.WorkshopParticipants.Count(wp => wp.Status == "paid")
+                        : 0)));
 
             CreateMap<WorkshopSchedule, WorkshopScheduleDetailsDto>()
                 .ForMember(d => d.Tickets, opt => opt.MapFrom(s =>
