@@ -95,7 +95,8 @@ namespace EXE201_Backend.Utils
                         : s.WorkshopTickets))
                 .ForMember(d => d.WorkshopTitle, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Title : string.Empty))
                 .ForMember(d => d.WorkshopThumbnailLink, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.ThumbnailLink : string.Empty))
-                .ForMember(d => d.WorkshopLocation, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Location : string.Empty));
+                .ForMember(d => d.WorkshopLocation, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Location : string.Empty))
+                .ForMember(d => d.WorkshopId, opt => opt.MapFrom(s => s.WorkshopId));
 
             CreateMap<WorkshopReview, WorkshopReviewDto>()
                 .ForMember(d => d.ReviewerName, opt => opt.MapFrom(s => s.User != null ? s.User.Name : string.Empty))
