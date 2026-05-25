@@ -13,6 +13,7 @@ namespace EXE201_Backend.Utils
             CreateMap<Workshop, WorkshopDisplayDto>()
                 .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
                 .ForMember(d => d.Category, opt => opt.MapFrom(s => s.Category != null ? s.Category.Name : string.Empty))
+                .ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status))
                 .ForMember(d => d.Level, opt => opt.MapFrom(s => s.Level != null ? s.Level.Name : string.Empty))
                 .ForMember(d => d.NextSchedule, opt => opt.MapFrom(s =>
                     s.WorkshopSchedules != null && s.WorkshopSchedules.Any()
@@ -27,6 +28,17 @@ namespace EXE201_Backend.Utils
                      s.WorkshopSchedules.SelectMany(s => s.WorkshopTickets ?? Enumerable.Empty<WorkshopTicket>()).Any())
                         ? s.WorkshopSchedules.SelectMany(s => s.WorkshopTickets!).Max(t => t.Price)
                         : 0m))
+                .ForMember(d => d.MaxTickets, opt => opt.MapFrom(s =>
+                    s.WorkshopSchedules
+                        .SelectMany(ws => ws.WorkshopTickets)
+                        .Sum(t => (int?)t.MaxTickets) ?? 0
+                ))
+                .ForMember(d => d.SoldTickets, opt => opt.MapFrom(s => 0))
+                .ForMember(d => d.RemainingTickets, opt => opt.MapFrom(s =>
+                    s.WorkshopSchedules
+                        .SelectMany(ws => ws.WorkshopTickets)
+                        .Sum(t => (int?)t.MaxTickets) ?? 0
+                ))
                 .ForMember(d => d.Rating, opt => opt.MapFrom(s =>
                     (s.WorkshopReviews != null && s.WorkshopReviews.Any())
                         ? s.WorkshopReviews.Average(r => (double)r.Rating)
@@ -51,6 +63,8 @@ namespace EXE201_Backend.Utils
             CreateMap<Workshop, WorkshopDetailsDto>()
                 .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
                 .ForMember(d => d.Category, opt => opt.MapFrom(s => s.Category != null ? s.Category.Name : string.Empty))
+                .ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status))
+
                 .ForMember(d => d.Level, opt => opt.MapFrom(s => s.Level != null ? s.Level.Name : string.Empty))
                 .ForMember(d => d.Images, opt => opt.MapFrom(s =>
                     s.WorkshopImages != null
@@ -64,8 +78,6 @@ namespace EXE201_Backend.Utils
                     (s.WorkshopReviews != null && s.WorkshopReviews.Any())
                         ? s.WorkshopReviews.Average(r => (double)r.Rating)
                         : 0.0))
-                .ForMember(d => d.InstructorName, opt => opt.MapFrom(s => s.CreatedByNavigation != null ? s.CreatedByNavigation.Name : string.Empty))
-                .ForMember(d => d.InstructorImgLink, opt => opt.MapFrom(s => s.CreatedByNavigation != null ? s.CreatedByNavigation.AvatarLink : null))
                 .ForMember(d => d.ReviewCount, opt => opt.MapFrom(s => s.WorkshopReviews != null ? s.WorkshopReviews.Count : 0))
                 .ForMember(d => d.Liked, opt => opt.MapFrom(s => s.Users != null && s.Users.Any()));
 
@@ -83,7 +95,8 @@ namespace EXE201_Backend.Utils
                         : s.WorkshopTickets))
                 .ForMember(d => d.WorkshopTitle, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Title : string.Empty))
                 .ForMember(d => d.WorkshopThumbnailLink, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.ThumbnailLink : string.Empty))
-                .ForMember(d => d.WorkshopLocation, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Location : string.Empty));
+                .ForMember(d => d.WorkshopLocation, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Location : string.Empty))
+                .ForMember(d => d.WorkshopId, opt => opt.MapFrom(s => s.WorkshopId));
 
             CreateMap<WorkshopReview, WorkshopReviewDto>()
                 .ForMember(d => d.ReviewerName, opt => opt.MapFrom(s => s.User != null ? s.User.Name : string.Empty))

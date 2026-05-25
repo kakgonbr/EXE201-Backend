@@ -10,7 +10,6 @@ namespace EXE201_Backend.Models.Requests
         public int? CategoryId { get; set; }
         public int? LevelId { get; set; }
         public string? Language { get; set; }
-        public string? Status { get; set; }
 
         public List<UpdateWorkshopScheduleRequest>? Schedules { get; set; }
     }

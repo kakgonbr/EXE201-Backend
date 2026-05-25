@@ -9,8 +9,7 @@
         public string Language { get; set; } = null!;
         public string Location { get; set; } = null!;
         public string Category { get; set; } = null!;
-        public string InstructorName { get; set; } = null!;
-        public string? InstructorImgLink { get; set; }
+        public string Status { get; set; } = string.Empty;
         public int Duration { get; set; }
         public string Level { get; set; } = null!;
         public double Rating { get; set; }

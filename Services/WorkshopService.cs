@@ -67,7 +67,10 @@ namespace EXE201_Backend.Services
                 sortBy, sortDesc, userId, page, pageSize, cancellationToken));
         }
 
-        public async Task<int> CreateWorkshopAsync(CreateWorkshopRequest request, int userId, CancellationToken cancellationToken = default)
+        public async Task<int> CreateWorkshopAsync(
+    CreateWorkshopRequest request,
+    int userId,
+    CancellationToken cancellationToken = default)
         {
             var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
             if (user == null)
@@ -75,18 +78,31 @@ namespace EXE201_Backend.Services
                 throw new ArgumentException("User not found.");
             }
 
+            var isDraft = string.Equals(
+                request.Status,
+                "draft",
+                StringComparison.OrdinalIgnoreCase
+            );
+
             var workshop = new Workshop
             {
-                Title = request.Title.Trim(),
+                Title = request.Title?.Trim() ?? string.Empty,
                 Description = request.Description?.Trim(),
-                Location = request.Location.Trim(),
+                Location = request.Location?.Trim() ?? string.Empty,
 
                 ThumbnailLink = request.ThumbnailLink?.Trim(),
-                CategoryId = request.CategoryId,
-                LevelId = request.LevelId,
-                Language = string.IsNullOrWhiteSpace(request.Language) ? "en" : request.Language.Trim(),
+
+                CategoryId = isDraft && request.CategoryId <= 0 ? 5 : request.CategoryId,
+
+                LevelId = isDraft && request.LevelId <= 0 ? 1 : request.LevelId,
+
+                Language = string.IsNullOrWhiteSpace(request.Language)
+                    ? "vi"
+                    : request.Language.Trim(),
+
                 CreatedBy = userId,
-                Status = string.IsNullOrWhiteSpace(request.Status) ? "pending" : request.Status.Trim(),
+                Status = isDraft ? "draft" : "pending",
+
                 WorkshopImages = request.ImageLinks != null
                     ? request.ImageLinks
                         .Where(link => !string.IsNullOrWhiteSpace(link))
@@ -103,8 +119,15 @@ namespace EXE201_Backend.Services
             {
                 foreach (var schReq in request.Schedules)
                 {
+                    if (string.IsNullOrWhiteSpace(schReq.StartOn))
+                    {
+                        if (isDraft) continue;
+                        throw new ArgumentException("Lịch trình là bắt buộc.");
+                    }
+
                     if (!DateOnly.TryParse(schReq.StartOn, out var startOn))
                     {
+                        if (isDraft) continue;
                         throw new ArgumentException($"Invalid StartOn date: {schReq.StartOn}");
                     }
 
@@ -121,14 +144,32 @@ namespace EXE201_Backend.Services
                     {
                         foreach (var tReq in schReq.Tickets)
                         {
+                            var hasStartTime = !string.IsNullOrWhiteSpace(tReq.StartTime);
+                            var hasEndTime = !string.IsNullOrWhiteSpace(tReq.EndTime);
+
+                            if (!hasStartTime || !hasEndTime)
+                            {
+                                if (isDraft) continue;
+                                throw new ArgumentException("Thời gian là bắt buộc.");
+                            }
+
                             if (!TimeOnly.TryParse(tReq.StartTime, out var st))
+                            {
+                                if (isDraft) continue;
                                 throw new ArgumentException($"Invalid ticket StartTime: {tReq.StartTime}");
+                            }
+
                             if (!TimeOnly.TryParse(tReq.EndTime, out var et))
+                            {
+                                if (isDraft) continue;
                                 throw new ArgumentException($"Invalid ticket EndTime: {tReq.EndTime}");
+                            }
 
                             var ticket = new WorkshopTicket
                             {
-                                TicketType = tReq.TicketType,
+                                TicketType = string.IsNullOrWhiteSpace(tReq.TicketType)
+                                    ? "standard"
+                                    : tReq.TicketType.Trim(),
                                 StartTime = st,
                                 EndTime = et,
                                 MaxTickets = tReq.MaxTickets,
@@ -149,13 +190,22 @@ namespace EXE201_Backend.Services
                         var maxEnd = tickets.Max(t => t.EndTime);
                         var span = maxEnd.ToTimeSpan() - minStart.ToTimeSpan();
                         var minutes = (int)Math.Max(0, span.TotalMinutes);
-                        if (minutes > maxDurationMinutes) maxDurationMinutes = minutes;
+
+                        if (minutes > maxDurationMinutes)
+                        {
+                            maxDurationMinutes = minutes;
+                        }
                     }
                 }
             }
 
             workshop.Duration = maxDurationMinutes;
-            ValidateWorkshopRequiredFields(workshop);
+
+            // pending phải đủ required, draft thì cho lưu thiếu
+            if (!isDraft)
+            {
+                ValidateWorkshopRequiredFields(workshop);
+            }
 
             await _workshopRepository.UpdateAsync(workshop, cancellationToken);
 
@@ -258,9 +308,6 @@ namespace EXE201_Backend.Services
 
             if (!string.IsNullOrWhiteSpace(request.Language))
                 workshop.Language = request.Language.Trim();
-
-            if (!string.IsNullOrWhiteSpace(request.Status))
-                workshop.Status = request.Status.Trim();
 
             if (request.ImageLinks != null && request.ImageLinks.Any())
             {
