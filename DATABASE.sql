@@ -180,6 +180,25 @@ CREATE TABLE HostRegistrations
     CONSTRAINT fk_hostregistration_user_approvedby FOREIGN KEY (ApprovedBy) REFERENCES Users
 )
 
+CREATE TABLE HostWithdraws
+(
+    Id int IDENTITY(1, 1) PRIMARY KEY,
+    UserId int NOT NULL,
+    Amount decimal(18, 2) NOT NULL,
+    BankName varchar(256) NOT NULL,
+    BankAccount varchar(50) NOT NULL,
+    Status varchar(10) NOT NULL DEFAULT 'pending',
+    CreatedOn datetime NOT NULL DEFAULT GETDATE(),
+    UpdatedOn datetime,
+    UpdatedBy int,
+    Note nvarchar(max),
+
+    CONSTRAINT fk_hostwithdraw_user FOREIGN KEY (UserId) REFERENCES Users,
+    CONSTRAINT fk_hostwithdraw_user_updatedby FOREIGN KEY (UpdatedBy) REFERENCES Users,
+    CONSTRAINT ck_hostwithdraw_status CHECK (Status IN ('pending', 'approved', 'rejected')),
+    CONSTRAINT ck_hostwithdraw_amount CHECK (Amount > 0)
+)
+
 -- Abc@12345
 INSERT INTO Users
 (Email, PhoneNumber, PasswordHash, Role, Name, Verified, IsActive, GoogleUserId)

@@ -18,6 +18,8 @@ public partial class ExeContext : DbContext
 
     public virtual DbSet<HostRegistration> HostRegistrations { get; set; }
 
+    public virtual DbSet<HostWithdraw> HostWithdraws { get; set; }
+
     public virtual DbSet<Payment> Payments { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -64,6 +66,36 @@ public partial class ExeContext : DbContext
                 .HasForeignKey<HostRegistration>(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_hostregistration_user");
+        });
+
+        modelBuilder.Entity<HostWithdraw>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__HostWith__3214EC0716ED9E36");
+
+            entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.BankAccount)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.BankName)
+                .HasMaxLength(256)
+                .IsUnicode(false);
+            entity.Property(e => e.CreatedOn)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Status)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasDefaultValue("pending");
+            entity.Property(e => e.UpdatedOn).HasColumnType("datetime");
+
+            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.HostWithdrawUpdatedByNavigations)
+                .HasForeignKey(d => d.UpdatedBy)
+                .HasConstraintName("fk_hostwithdraw_user_updatedby");
+
+            entity.HasOne(d => d.User).WithMany(p => p.HostWithdrawUsers)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_hostwithdraw_user");
         });
 
         modelBuilder.Entity<Payment>(entity =>

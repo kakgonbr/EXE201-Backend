@@ -186,6 +186,22 @@ namespace EXE201_Backend.Repositories
             };
         }
 
+        public async Task<IEnumerable<Workshop>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
+        {
+            return await _db.Workshops
+                .AsNoTracking()
+                .Where(w => w.CreatedBy == userId)
+                .Include(w => w.Category)
+                .Include(w => w.Level)
+                .Include(w => w.WorkshopReviews)
+                .Include(w => w.WorkshopImages)
+                .Include(w => w.WorkshopSchedules)
+                    .ThenInclude(ws => ws.WorkshopTickets)
+                        .ThenInclude(wt => wt.WorkshopParticipants)
+                .OrderByDescending(w => w.CreatedOn)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
         {
             return await _db.SaveChangesAsync(cancellationToken);

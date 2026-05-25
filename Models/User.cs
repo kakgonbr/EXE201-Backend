@@ -33,6 +33,10 @@ public partial class User
 
     public virtual HostRegistration? HostRegistrationUser { get; set; }
 
+    public virtual ICollection<HostWithdraw> HostWithdrawUpdatedByNavigations { get; set; } = new List<HostWithdraw>();
+
+    public virtual ICollection<HostWithdraw> HostWithdrawUsers { get; set; } = new List<HostWithdraw>();
+
     public virtual ICollection<WorkshopParticipant> WorkshopParticipants { get; set; } = new List<WorkshopParticipant>();
 
     public virtual ICollection<WorkshopReview> WorkshopReviews { get; set; } = new List<WorkshopReview>();

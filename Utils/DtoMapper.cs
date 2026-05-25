@@ -108,6 +108,11 @@ namespace EXE201_Backend.Utils
                 .ForMember(d => d.UserName, opt => opt.MapFrom(s => s.User != null ? s.User.Name : string.Empty))
                 .ForMember(d => d.ApprovedBy, opt => opt.MapFrom(s => s.ApprovedByNavigation != null ? s.ApprovedByNavigation.Name : string.Empty))
                 .ForMember(d => d.UserAvatarUrl, opt => opt.MapFrom(s => s.User != null ? s.User.AvatarLink : null));
+
+            CreateMap<HostWithdraw, HostWithdrawRequestDto>()
+                .ForMember(d => d.HostId, opt => opt.MapFrom(s => s.UserId))
+                .ForMember(d => d.HostName, opt => opt.MapFrom(s => s.User.Name))
+                .ForMember(d => d.UpdatedBy, opt => opt.MapFrom(s => s.UpdatedByNavigation != null ? s.UpdatedByNavigation.Name : string.Empty));
         }
     }
 }
