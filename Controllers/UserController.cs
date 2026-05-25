@@ -1,5 +1,4 @@
-﻿using EXE201_Backend.Models;
-using EXE201_Backend.Models.Requests;
+﻿using EXE201_Backend.Models.Requests;
 using EXE201_Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
