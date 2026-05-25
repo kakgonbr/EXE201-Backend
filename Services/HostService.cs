@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using EXE201_Backend.Extensions;
 using EXE201_Backend.Models;
 using EXE201_Backend.Models.Dto;
@@ -30,6 +30,12 @@ namespace EXE201_Backend.Services
             var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
 
             if (user == null)
+            {
+                return false;
+            }
+
+            var existingRegistration = await _hostRegistrationRepository.GetByUserIdAsync(userId, cancellationToken);
+            if (existingRegistration != null)
             {
                 return false;
             }
