@@ -222,10 +222,10 @@ namespace EXE201_Backend.Services
         }
 
         public async Task<bool> UpdateWorkshopAsync(
-    int id,
-    UpdateWorkshopRequest request,
-    int userId,
-    CancellationToken cancellationToken = default)
+            int id,
+            UpdateWorkshopRequest request,
+            int userId,
+            CancellationToken cancellationToken = default)
         {
             var workshop = await _workshopRepository.GetByIdAsync(id, userId, cancellationToken);
             if (workshop == null)
@@ -376,7 +376,14 @@ namespace EXE201_Backend.Services
                 return false;
             }
 
-            if (workshop.CreatedBy != userId)
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            if (workshop.CreatedBy != userId && user.Role != "staff")
             {
                 throw new UnauthorizedAccessException("You can only delete your own workshops.");
             }
@@ -395,6 +402,18 @@ namespace EXE201_Backend.Services
             }
 
             await _workshopRepository.DeleteAsync(id, cancellationToken);
+            return true;
+        }
+
+        public async Task<bool> VerifyWorkshopAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var workshop = await _workshopRepository.GetByIdAsync(id, null, cancellationToken);
+            if (workshop == null)
+            {
+                return false;
+            }
+            workshop.Status = "verified";
+            await _workshopRepository.UpdateAsync(workshop, cancellationToken);
             return true;
         }
     }
