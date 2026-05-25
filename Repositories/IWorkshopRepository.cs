@@ -10,6 +10,7 @@ namespace EXE201_Backend.Repositories
         Task<PagedResultDto<Workshop>> GetAllPagedAsync(string? status = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);
         Task<PagedResultDto<Workshop>> GetByUserIdPagedAsync(int userId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);
         Task<Workshop?> GetByIdAsync(int id, int? userId = null, CancellationToken cancellationToken = default);
+        Task<IEnumerable<Workshop>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default); // NEW
         Task<IEnumerable<Workshop>> GetRecommendationsAsync(int? userId, CancellationToken cancellationToken = default);
         Task<int> SaveAsync(CancellationToken cancellationToken = default);
         Task<PagedResultDto<Workshop>> SearchAsync(string? query = null, IEnumerable<string>? locations = null, IEnumerable<string>? categories = null, IEnumerable<string>? levels = null, decimal? priceMin = null, decimal? priceMax = null, int? durationMin = null, int? durationMax = null, int? scheduleWithinDays = null, WorkshopSort? sortBy = null, bool sortDesc = false, int userId = 0, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);

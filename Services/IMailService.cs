@@ -10,5 +10,8 @@ namespace EXE201_Backend.Services
         Task SendHostRejected(string to, CancellationToken cancellationToken = default);
         Task<string?> SendOtp(string to, CancellationToken cancellationToken = default);
         Task<string?> SendResetPassword(string to, CancellationToken cancellationToken = default);
+        Task SendWithdrawRequestApproved(string to, CancellationToken cancellationToken = default);
+        Task SendWithdrawRequestReceived(string to, CancellationToken cancellationToken = default);
+        Task SendWithdrawRequestRejected(string to, CancellationToken cancellationToken = default);
     }
 }

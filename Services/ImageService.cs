@@ -91,6 +91,8 @@ namespace EXE201_Backend.Services
 
         private void DeleteImage(string name)
         {
+            name = name.Split('/').LastOrDefault() ?? name;
+
             _logger.LogInformation("Deleting {Name}", name);
 
             string fullPath = Path.Combine(_configurationService.IMAGE_DIR, name);
