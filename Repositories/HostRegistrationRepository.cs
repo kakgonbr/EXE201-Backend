@@ -10,7 +10,9 @@ namespace EXE201_Backend.Repositories
     {
         Id = 0,
         UserName,
-        Approved
+        Approved,
+        CreationTime,
+        UpdateTime
     }
 
     public enum ApproveStatusFilter
@@ -82,6 +84,7 @@ namespace EXE201_Backend.Repositories
             var query = _db.HostRegistrations
                 .AsNoTracking()
                 .Include(hr => hr.User)
+                .Include(hr => hr.ApprovedByNavigation)
                 .AsQueryable();
 
             if (approveFilter.HasValue && approveFilter.Value != ApproveStatusFilter.Both)
@@ -110,6 +113,18 @@ namespace EXE201_Backend.Repositories
                     query = sortDesc
                         ? query.OrderByDescending(hr => hr.Approved)
                         : query.OrderBy(hr => hr.Approved);
+                    break;
+
+                case HostRegistrationSort.CreationTime:
+                    query = sortDesc
+                        ? query.OrderByDescending(hr => hr.CreatedOn)
+                        : query.OrderBy(hr => hr.CreatedOn);
+                    break;
+
+                case HostRegistrationSort.UpdateTime:
+                    query = sortDesc
+                        ? query.OrderByDescending(hr => hr.UpdatedOn)
+                        : query.OrderBy(hr => hr.UpdatedOn);
                     break;
 
                 case HostRegistrationSort.Id:

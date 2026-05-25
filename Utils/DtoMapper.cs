@@ -107,8 +107,7 @@ namespace EXE201_Backend.Utils
             CreateMap<HostRegistration, HostRegistrationDto>()
                 .ForMember(d => d.UserName, opt => opt.MapFrom(s => s.User != null ? s.User.Name : string.Empty))
                 .ForMember(d => d.ApprovedBy, opt => opt.MapFrom(s => s.ApprovedByNavigation != null ? s.ApprovedByNavigation.Name : string.Empty))
-                .ForMember(d => d.UserAvatarUrl, opt => opt.MapFrom(s => s.User != null ? s.User.AvatarLink : null))
-                .ForMember(d => d.ApprovedOn, opt => opt.MapFrom(s => s.Approved ? s.CreatedOn : (DateTime?)null));
+                .ForMember(d => d.UserAvatarUrl, opt => opt.MapFrom(s => s.User != null ? s.User.AvatarLink : null));
         }
     }
 }

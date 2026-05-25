@@ -8,7 +8,7 @@
         public string UserName { get; set; } = default!;
         public string? ApprovedBy { get; set; }
         public string? UserAvatarUrl { get; set; }
-        public DateTime? ApprovedOn { get; set; }
+        public DateTime? UpdatedOn { get; set; }
         public DateTime CreatedOn { get; set; }
     }
 }
