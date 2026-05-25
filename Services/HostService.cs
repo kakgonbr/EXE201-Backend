@@ -92,7 +92,7 @@ namespace EXE201_Backend.Services
             bool sortDesc = false, int page = 1,
             int pageSize = 10, CancellationToken cancellationToken = default)
         {
-            var pagedHostRegistrations = await _hostRegistrationRepository.GetAllAsync(ApproveStatusFilter.Both, sortBy, sortDesc, page, pageSize, cancellationToken);
+            var pagedHostRegistrations = await _hostRegistrationRepository.GetAllAsync(approveFilter, sortBy, sortDesc, page, pageSize, cancellationToken);
             return _mapper.MapPagedResult<HostRegistration, HostRegistrationDto>(pagedHostRegistrations);
         }
     }
