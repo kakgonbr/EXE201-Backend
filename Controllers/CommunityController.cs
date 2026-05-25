@@ -82,5 +82,23 @@ namespace EXE201_Backend.Controllers
 
             return Ok(reviews);
         }
+
+        [Authorize]
+        [HttpPost("like/{workshopId}")] // toggle
+        public async Task<IActionResult> LikeWorkshop([FromRoute] int workshopId, CancellationToken cancellationToken = default)
+        {
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var parsedUserId))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _communityService.ToggleLikeWorkshopAsync(parsedUserId, workshopId, cancellationToken);
+            if (!result)
+            {
+                return BadRequest();
+            }
+
+            return Ok();
+        }
     }
 }

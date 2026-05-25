@@ -13,5 +13,6 @@ namespace EXE201_Backend.Services
         Task<PagedResultDto<WorkshopDetailsDto>> GetWorkshopsByUserIdAsync(int userId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);
         Task<bool> UpdateWorkshopAsync(int id, Models.Requests.UpdateWorkshopRequest request, int userId, CancellationToken cancellationToken = default);
         Task<bool> DeleteWorkshopAsync(int id, int userId, CancellationToken cancellationToken = default);
+        Task<bool> VerifyWorkshopAsync(int id, CancellationToken cancellationToken = default);
     }
 }
