@@ -13,13 +13,15 @@ namespace EXE201_Backend.Services
         private readonly IUserRepository _userRepository;
         private readonly IWorkshopRepository _workshopRepository;
         private readonly IWorkshopScheduleRepository _workshopScheduleRepository;
+        private readonly IWorkshopTicketRepository _workshopTicketRepository;
+        private readonly IWorkshopParticipantRepository _workshopParticipantRepository;
         private readonly ITimeProvider _timeProvider;
         private readonly IConfigurationService _configurationService;
         private readonly ILogger<WorkshopService> _logger;
         private readonly IMapper _mapper;
         private readonly IImageService _imageService;
 
-        public WorkshopService(IUserRepository userRepository, IWorkshopRepository workshopRepository, IWorkshopScheduleRepository workshopScheduleRepository, ITimeProvider timeProvider, IConfigurationService configurationService, ILogger<WorkshopService> logger, IMapper mapper, IImageService imageService)
+        public WorkshopService(IUserRepository userRepository, IWorkshopRepository workshopRepository, IWorkshopScheduleRepository workshopScheduleRepository, ITimeProvider timeProvider, IConfigurationService configurationService, ILogger<WorkshopService> logger, IMapper mapper, IImageService imageService, IWorkshopTicketRepository workshopTicketRepository, IWorkshopParticipantRepository workshopParticipantRepository)
         {
             _userRepository = userRepository;
             _workshopRepository = workshopRepository;
@@ -29,6 +31,8 @@ namespace EXE201_Backend.Services
             _logger = logger;
             _mapper = mapper;
             _imageService = imageService;
+            _workshopTicketRepository = workshopTicketRepository;
+            _workshopParticipantRepository = workshopParticipantRepository;
         }
 
         public async Task<IEnumerable<WorkshopDisplayDto>> GetRecommendedWorkshopsAsync(int? userId, CancellationToken cancellationToken = default)
@@ -461,6 +465,66 @@ namespace EXE201_Backend.Services
             }
             workshop.Status = "verified";
             await _workshopRepository.UpdateAsync(workshop, cancellationToken);
+            return true;
+        }
+
+        public async Task<PagedResultDto<WorkshopTicketDetailsDto>> GetTicketsAsync(int hostId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+        {
+            var activeTickets = await _workshopTicketRepository.GetUpcomingTicketsAsync(hostId, _timeProvider.Now, page, pageSize, cancellationToken);
+
+            return _mapper.MapPagedResult<WorkshopTicket, WorkshopTicketDetailsDto>(activeTickets, opts => opts.Items["currentTime"] = _timeProvider.Now);
+        }
+
+        public async Task<PagedResultDto<WorkshopParticipantDto>> GetParticipantsForTicketAsync(int ticketId, int hostId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+        {
+            var ticket = await _workshopTicketRepository.GetByIdAsync(ticketId, cancellationToken);
+            if (ticket == null)
+            {
+                throw new ArgumentException("Ticket not found.");
+            }
+
+            if (ticket.WorkshopSchedule.Workshop.CreatedBy != hostId)
+            {
+                throw new UnauthorizedAccessException("You can only view participants for your own workshops.");
+            }
+
+            var participants = await _workshopParticipantRepository.GetByTicketIdAsync(ticketId, page, pageSize, cancellationToken);
+            return _mapper.MapPagedResult<WorkshopParticipant, WorkshopParticipantDto>(participants);
+        }
+
+        public async Task<bool> CheckInParticipantAsync(int ticketId, int participantId, int hostId, CancellationToken cancellationToken = default)
+        {
+            var ticket = await _workshopTicketRepository.GetByIdAsync(ticketId, cancellationToken);
+            if (ticket == null)
+            {
+                throw new ArgumentException("Ticket not found.");
+            }
+
+            if (ticket.WorkshopSchedule.StartOn != DateOnly.FromDateTime(_timeProvider.Now) 
+               || (ticket.StartTime > TimeOnly.FromDateTime(_timeProvider.Now) || ticket.EndTime < TimeOnly.FromDateTime(_timeProvider.Now)))
+            {
+                throw new InvalidOperationException("Invalid date.");
+            }
+
+            var participant = await _workshopParticipantRepository.GetByIdAsync(participantId, ticketId, cancellationToken);
+            if (participant == null)
+            {
+                throw new ArgumentException("Participant not found for the given ticket.");
+            }
+
+            if (participant.Ticket.WorkshopSchedule.Workshop.CreatedBy != hostId)
+            {
+                throw new UnauthorizedAccessException("You can only check in participants for your own workshops.");
+            }
+
+            if (participant.Status == "checked in")
+            {
+                throw new InvalidOperationException("Participant has already been checked in.");
+            }
+
+            participant.Status = "checked in";
+            await _workshopParticipantRepository.UpdateAsync(participant, cancellationToken);
+            
             return true;
         }
     }

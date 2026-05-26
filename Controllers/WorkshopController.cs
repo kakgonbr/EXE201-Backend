@@ -240,5 +240,68 @@ namespace EXE201_Backend.Controllers
                 return Forbid(ex.Message);
             }
         }
+
+        [Authorize(Roles = "host")]
+        [HttpGet("tickets")]
+        public async Task<IActionResult> GetTickets([FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+        {
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _workshopService.GetTicketsAsync(userId, page, pageSize, cancellationToken);
+
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "host")]
+        [HttpPost("tickets/checkin")]
+        public async Task<IActionResult> CheckInUser([FromBody] TicketCheckinRequest request, CancellationToken cancellationToken = default)
+        {
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var hostId))
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                var checkedIn = await _workshopService.CheckInParticipantAsync(request.TicketId, request.ParticipantId, hostId, cancellationToken);
+
+                if (!checkedIn)
+                {
+                    return NotFound();
+                }
+
+                return Ok(new { message = "User checked in successfully" });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+        }
+
+        [Authorize(Roles = "host")]
+        [HttpGet("tickets/{ticketId:int}/participants")]
+        public async Task<IActionResult> GetParticipants(int ticketId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+        {
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var hostId))
+            {
+                return Unauthorized();
+            }
+            try
+            {
+                var result = await _workshopService.GetParticipantsForTicketAsync(ticketId, hostId, page, pageSize, cancellationToken);
+                if (result == null)
+                {
+                    return NotFound();
+                }
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+        }
     }
 }

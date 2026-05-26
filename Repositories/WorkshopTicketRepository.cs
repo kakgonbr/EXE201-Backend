@@ -18,6 +18,8 @@ namespace EXE201_Backend.Repositories
         public async Task<WorkshopTicket?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _db.WorkshopTickets
+                .Include(wt => wt.WorkshopSchedule)
+                    .ThenInclude(ws => ws.Workshop)
                 .SingleOrDefaultAsync(t => t.Id == id, cancellationToken);
         }
 
@@ -51,6 +53,24 @@ namespace EXE201_Backend.Repositories
         public async Task<PagedResultDto<WorkshopTicket>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default)
         {
             return await _db.WorkshopTickets.ToPagedResultAsync(page, pageSize, cancellationToken);
+        }
+
+        public async Task<PagedResultDto<WorkshopTicket>> GetUpcomingTicketsAsync(int hostId, DateTime time, int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            DateOnly dateOnly = DateOnly.FromDateTime(time);
+            TimeOnly timeOnly = TimeOnly.FromDateTime(time);
+
+            return await _db.WorkshopTickets
+                .Include(wt => wt.WorkshopSchedule)
+                    .ThenInclude(ws => ws.Workshop)
+                .Where(wt => wt.WorkshopSchedule.Workshop.CreatedBy == hostId
+                    && wt.WorkshopSchedule.Workshop.Status == "verified"
+                    && (wt.WorkshopSchedule.StartOn > dateOnly
+                        || (wt.WorkshopSchedule.StartOn == dateOnly && wt.EndTime > timeOnly)))
+                //.OrderBy(wt => wt.WorkshopSchedule.StartOn.ToDateTime(wt.StartTime))
+                .OrderBy(wt => wt.WorkshopSchedule.StartOn)
+                    .ThenBy(wt => wt.StartTime)
+                .ToPagedResultAsync(page, pageSize, cancellationToken);
         }
 
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)

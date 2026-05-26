@@ -113,6 +113,21 @@ namespace EXE201_Backend.Utils
                 .ForMember(d => d.HostId, opt => opt.MapFrom(s => s.UserId))
                 .ForMember(d => d.HostName, opt => opt.MapFrom(s => s.User.Name))
                 .ForMember(d => d.UpdatedBy, opt => opt.MapFrom(s => s.UpdatedByNavigation != null ? s.UpdatedByNavigation.Name : string.Empty));
+
+            CreateMap<WorkshopTicket, WorkshopTicketDetailsDto>()
+                .ForMember(d => d.WorkshopTitle, opt => opt.MapFrom(s => s.WorkshopSchedule != null && s.WorkshopSchedule.Workshop != null ? s.WorkshopSchedule.Workshop.Title : string.Empty))
+                .ForMember(d => d.WorkshopThumbnailLink, opt => opt.MapFrom(s => s.WorkshopSchedule != null && s.WorkshopSchedule.Workshop != null ? s.WorkshopSchedule.Workshop.ThumbnailLink : string.Empty))
+                .ForMember(d => d.WorkshopLocation, opt => opt.MapFrom(s => s.WorkshopSchedule != null && s.WorkshopSchedule.Workshop != null ? s.WorkshopSchedule.Workshop.Location : string.Empty))
+                .ForMember(
+                    d => d.IsOngoing,
+                    opt => opt.MapFrom((src, _, _, ctx) =>
+                        src.WorkshopSchedule.StartOn.ToDateTime(src.StartTime) <= (DateTime)ctx.Items["currentTime"] && src.WorkshopSchedule.StartOn.ToDateTime(src.EndTime) >= (DateTime)ctx.Items["currentTime"]
+                    ));
+
+            CreateMap<WorkshopParticipant, WorkshopParticipantDto>()
+                .ForMember(d => d.UserName, opt => opt.MapFrom(s => s.Participant != null ? s.Participant.Name : string.Empty))
+                .ForMember(d => d.UserEmail, opt => opt.MapFrom(s => s.Participant != null ? s.Participant.Email : string.Empty))
+                .ForMember(d => d.AvatarLink, opt => opt.MapFrom(s => s.Participant != null ? s.Participant.AvatarLink : null));
         }
     }
 }
