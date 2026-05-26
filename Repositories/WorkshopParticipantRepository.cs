@@ -57,6 +57,14 @@ namespace EXE201_Backend.Repositories
             return await _db.WorkshopParticipants.ToPagedResultAsync(page, pageSize, cancellationToken);
         }
 
+        public async Task<PagedResultDto<WorkshopParticipant>> GetByTicketIdAsync(int ticketId, int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            return await _db.WorkshopParticipants
+                .Where(wp => wp.TicketId == ticketId)
+                .Include(wp => wp.Participant)
+                .ToPagedResultAsync(page, pageSize, cancellationToken);
+        }
+
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
         {
             return await _db.SaveChangesAsync(cancellationToken);
