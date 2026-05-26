@@ -118,6 +118,8 @@ namespace EXE201_Backend.Utils
                 .ForMember(d => d.WorkshopTitle, opt => opt.MapFrom(s => s.WorkshopSchedule != null && s.WorkshopSchedule.Workshop != null ? s.WorkshopSchedule.Workshop.Title : string.Empty))
                 .ForMember(d => d.WorkshopThumbnailLink, opt => opt.MapFrom(s => s.WorkshopSchedule != null && s.WorkshopSchedule.Workshop != null ? s.WorkshopSchedule.Workshop.ThumbnailLink : string.Empty))
                 .ForMember(d => d.WorkshopLocation, opt => opt.MapFrom(s => s.WorkshopSchedule != null && s.WorkshopSchedule.Workshop != null ? s.WorkshopSchedule.Workshop.Location : string.Empty))
+                .ForMember(d => d.StartOn, opt => opt.MapFrom(s => s.WorkshopSchedule != null ? s.WorkshopSchedule.StartOn : default))
+                .ForMember(d => d.ParticipantCount, opt => opt.MapFrom(s => s.WorkshopParticipants != null ? s.WorkshopParticipants.Count : 0))
                 .ForMember(
                     d => d.IsOngoing,
                     opt => opt.MapFrom((src, _, _, ctx) =>

@@ -4,8 +4,10 @@
     {
         public int Id { get; set; }
         public string TicketType { get; set; } = null!;
+        public DateOnly StartOn { get; set; }
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
+        public int ParticipantCount { get; set; }
         public bool IsOngoing { get; set; }
         public string WorkshopTitle { get; set; } = null!;
         public string? WorkshopThumbnailLink { get; set; }
