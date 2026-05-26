@@ -95,13 +95,24 @@ namespace EXE201_Backend.Utils
                         : s.WorkshopTickets))
                 .ForMember(d => d.WorkshopTitle, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Title : string.Empty))
                 .ForMember(d => d.WorkshopThumbnailLink, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.ThumbnailLink : string.Empty))
-                .ForMember(d => d.WorkshopLocation, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Location : string.Empty));
+                .ForMember(d => d.WorkshopLocation, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Location : string.Empty))
+                .ForMember(d => d.WorkshopId, opt => opt.MapFrom(s => s.WorkshopId));
 
             CreateMap<WorkshopReview, WorkshopReviewDto>()
                 .ForMember(d => d.ReviewerName, opt => opt.MapFrom(s => s.User != null ? s.User.Name : string.Empty))
                 .ForMember(d => d.ReviewerId, opt => opt.MapFrom(s => s.UserId))
                 .ForMember(d => d.ReviewerAvatarLink, opt => opt.MapFrom(s => s.User != null ? s.User.AvatarLink : string.Empty))
                 .ForMember(d => d.WorkshopName, opt => opt.MapFrom(s => s.Workshop != null ? s.Workshop.Title : string.Empty));
+
+            CreateMap<HostRegistration, HostRegistrationDto>()
+                .ForMember(d => d.UserName, opt => opt.MapFrom(s => s.User != null ? s.User.Name : string.Empty))
+                .ForMember(d => d.ApprovedBy, opt => opt.MapFrom(s => s.ApprovedByNavigation != null ? s.ApprovedByNavigation.Name : string.Empty))
+                .ForMember(d => d.UserAvatarUrl, opt => opt.MapFrom(s => s.User != null ? s.User.AvatarLink : null));
+
+            CreateMap<HostWithdraw, HostWithdrawRequestDto>()
+                .ForMember(d => d.HostId, opt => opt.MapFrom(s => s.UserId))
+                .ForMember(d => d.HostName, opt => opt.MapFrom(s => s.User.Name))
+                .ForMember(d => d.UpdatedBy, opt => opt.MapFrom(s => s.UpdatedByNavigation != null ? s.UpdatedByNavigation.Name : string.Empty));
         }
     }
 }

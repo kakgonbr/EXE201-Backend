@@ -197,7 +197,7 @@ namespace EXE201_Backend.Controllers
             }
         }
 
-        [Authorize(Roles = "host")]
+        [Authorize(Roles = "host,staff")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteWorkshop(int id, CancellationToken cancellationToken = default)
         {
@@ -214,6 +214,26 @@ namespace EXE201_Backend.Controllers
                     return NotFound();
                 }
                 return Ok(new { message = "Workshop deleted successfully" });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+        }
+
+        [Authorize(Roles = "staff")]
+        [HttpPost("{id:int}/verify")]
+        public async Task<IActionResult> VerifyWorkshop(int id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var verified = await _workshopService.VerifyWorkshopAsync(id, cancellationToken);
+                if (!verified)
+                {
+                    return NotFound();
+                }
+
+                return Ok(new { message = "Workshop verified successfully" });
             }
             catch (UnauthorizedAccessException ex)
             {
