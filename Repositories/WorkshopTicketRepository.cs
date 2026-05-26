@@ -61,6 +61,7 @@ namespace EXE201_Backend.Repositories
             TimeOnly timeOnly = TimeOnly.FromDateTime(time);
 
             return await _db.WorkshopTickets
+                .Include(wt => wt.WorkshopParticipants)
                 .Include(wt => wt.WorkshopSchedule)
                     .ThenInclude(ws => ws.Workshop)
                 .Where(wt => wt.WorkshopSchedule.Workshop.CreatedBy == hostId
