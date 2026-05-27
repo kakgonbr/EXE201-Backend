@@ -119,6 +119,8 @@ namespace EXE201_Backend.Services
             };
         }
 
+        private decimal FinalRevenue(decimal revenue) => ((100 - _configurationService.SERVICE_COST_PERCENTAGE) / 100.0m) * revenue;
+
         // TODO: CURERNTLY SLOW AND INEFFICIENT, SWAP TO BETTER QUERIES WITHIN REPOSITORIES
 
         private async Task<decimal> CalculateTotalRevenueAsync(int hostId, CancellationToken cancellationToken = default)
@@ -139,14 +141,15 @@ namespace EXE201_Backend.Services
                         foreach (var t in tickets)
                         {
                             var participants = t.WorkshopParticipants ?? Enumerable.Empty<WorkshopParticipant>();
-                            var checkedInCount = participants.Count(p => string.Equals(p.Status, "checked in", StringComparison.OrdinalIgnoreCase));
+                            var checkedInCount = participants.Count(p =>
+                                p.Status == "checked in" || p.Status == "paid");
                             total += t.Price * checkedInCount;
                         }
                     }
                 }
             }
 
-            return total;
+            return FinalRevenue(total);
         }
 
         private async Task<decimal> CalculateAvailableRevenueAsync(int hostId, CancellationToken cancellationToken = default)
@@ -187,7 +190,7 @@ namespace EXE201_Backend.Services
                 }
             }
 
-            return upcoming;
+            return FinalRevenue(upcoming);
         }
     }
 }
