@@ -13,7 +13,7 @@ namespace EXE201_Backend.Services
         Task<PagedResultDto<WorkshopDetailsDto>> GetWorkshopsByUserIdAsync(int userId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);
         Task<bool> UpdateWorkshopAsync(int id, Models.Requests.UpdateWorkshopRequest request, int userId, CancellationToken cancellationToken = default);
         Task<bool> DeleteWorkshopAsync(int id, int userId, CancellationToken cancellationToken = default);
-        Task<bool> VerifyWorkshopAsync(int id, CancellationToken cancellationToken = default);
+        Task<bool> UpdateWorkshopApprovalAsync(int id, bool approved, CancellationToken cancellationToken = default);
         Task<PagedResultDto<WorkshopTicketDetailsDto>> GetTicketsAsync(int hostId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);
         Task<bool> CheckInParticipantAsync(int ticketId, int participantId, int hostId, CancellationToken cancellationToken = default);
         Task<PagedResultDto<WorkshopParticipantDto>> GetParticipantsForTicketAsync(int ticketId, int hostId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);

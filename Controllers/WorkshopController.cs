@@ -222,23 +222,17 @@ namespace EXE201_Backend.Controllers
         }
 
         [Authorize(Roles = "staff")]
-        [HttpPost("{id:int}/verify")]
-        public async Task<IActionResult> VerifyWorkshop(int id, CancellationToken cancellationToken = default)
+        [HttpPost("approval/{id}")]
+        public async Task<IActionResult> UpdateWorkshopApproval(int id, [FromQuery] bool approved, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var verified = await _workshopService.VerifyWorkshopAsync(id, cancellationToken);
-                if (!verified)
-                {
-                    return NotFound();
-                }
+            var result = await _workshopService.UpdateWorkshopApprovalAsync(id, approved, cancellationToken);
 
-                return Ok(new { message = "Workshop verified successfully" });
-            }
-            catch (UnauthorizedAccessException ex)
+            if (!result)
             {
-                return Forbid(ex.Message);
+                return BadRequest("Failed to update workshop approval.");
             }
+
+            return Ok();
         }
 
         [Authorize(Roles = "host")]
