@@ -144,7 +144,7 @@ namespace EXE201_Backend.Services
         }
 
         private decimal CalculateServiceCost(decimal basePrice) =>
-            basePrice + (_configurationService.SERVICE_COST_PERCENTAGE / 100m) * basePrice;
+            basePrice;
 
         public async Task<bool> InformPaymentStatus(int userId, int ticketId, decimal amountPaid, CancellationToken cancellationToken = default)
         {

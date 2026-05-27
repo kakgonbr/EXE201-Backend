@@ -55,6 +55,11 @@ namespace EXE201_Backend.Controllers
                 return Unauthorized();
             }
 
+            if (hostWithdrawCreateRequest.Amount < 10000)
+            {
+                return BadRequest();
+            }
+
             var result = await _revenueService.CreateWithdrawRequestAsync(parsedUserId, hostWithdrawCreateRequest.Amount, hostWithdrawCreateRequest.BankName, hostWithdrawCreateRequest.BankAccount, cancellationToken);
 
             if (result)
