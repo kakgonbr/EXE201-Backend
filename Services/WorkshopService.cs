@@ -116,6 +116,13 @@ namespace EXE201_Backend.Services
             };
 
             await _workshopRepository.AddAsync(workshop, cancellationToken);
+            if (
+                !string.IsNullOrWhiteSpace(request.ThumbnailLink) ||
+                (request.ImageLinks != null && request.ImageLinks.Any())
+            )
+            {
+                _imageService.ConsumeImage(userId);
+            }
 
             int maxDurationMinutes = 0;
 
@@ -456,15 +463,24 @@ namespace EXE201_Backend.Services
             return true;
         }
 
-        public async Task<bool> VerifyWorkshopAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateWorkshopApprovalAsync(int id, bool approved, CancellationToken cancellationToken = default)
         {
-            var workshop = await _workshopRepository.GetByIdAsync(id, null, cancellationToken);
+            var workshop = await _workshopRepository.GetByIdAsync(id);
+
             if (workshop == null)
             {
                 return false;
             }
-            workshop.Status = "verified";
+
+            if (workshop.Status != "pending")
+            {
+                return false;
+            }
+
+            workshop.Status = approved ? "verified" : "rejected";
+
             await _workshopRepository.UpdateAsync(workshop, cancellationToken);
+
             return true;
         }
 
@@ -500,7 +516,7 @@ namespace EXE201_Backend.Services
                 throw new ArgumentException("Ticket not found.");
             }
 
-            if (ticket.WorkshopSchedule.StartOn != DateOnly.FromDateTime(_timeProvider.Now) 
+            if (ticket.WorkshopSchedule.StartOn != DateOnly.FromDateTime(_timeProvider.Now)
                || (ticket.StartTime > TimeOnly.FromDateTime(_timeProvider.Now) || ticket.EndTime < TimeOnly.FromDateTime(_timeProvider.Now)))
             {
                 throw new InvalidOperationException("Invalid date.");
@@ -524,7 +540,7 @@ namespace EXE201_Backend.Services
 
             participant.Status = "checked in";
             await _workshopParticipantRepository.UpdateAsync(participant, cancellationToken);
-            
+
             return true;
         }
     }
