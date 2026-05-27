@@ -22,7 +22,18 @@ namespace EXE201_Backend
             builder.Services.AddDbContext<ExeContext>(options =>
                 options.UseSqlServer(Environment.GetEnvironmentVariable("DATABASE_CONNECTION")));
 
-            var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")?.Split(',') ?? Array.Empty<string>();
+            var allowedOriginsRaw =
+                Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")
+                ?? builder.Configuration["ALLOWED_ORIGINS"]
+                ?? "";
+
+            var allowedOrigins = allowedOriginsRaw
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(origin => origin.TrimEnd('/'))
+                .Distinct()
+                .ToArray();
+
+            Console.WriteLine("ALLOWED_ORIGINS = " + string.Join(" | ", allowedOrigins));
 
             builder.Services.AddCors(options =>
             {
