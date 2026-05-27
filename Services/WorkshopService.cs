@@ -477,7 +477,7 @@ namespace EXE201_Backend.Services
                 return false;
             }
 
-            workshop.Status = approved ? "verified" : "rejected";
+            workshop.Status = approved ? "verified" : "removed";
 
             await _workshopRepository.UpdateAsync(workshop, cancellationToken);
 
@@ -516,7 +516,7 @@ namespace EXE201_Backend.Services
                 throw new ArgumentException("Ticket not found.");
             }
 
-            if (ticket.WorkshopSchedule.StartOn > DateOnly.FromDateTime(_timeProvider.Now) 
+            if (ticket.WorkshopSchedule.StartOn > DateOnly.FromDateTime(_timeProvider.Now)
                || (ticket.WorkshopSchedule.StartOn == DateOnly.FromDateTime(_timeProvider.Now) && ticket.StartTime > TimeOnly.FromDateTime(_timeProvider.Now)))
             {
                 throw new InvalidOperationException("Invalid date.");
