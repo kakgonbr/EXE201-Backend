@@ -1,4 +1,4 @@
-﻿namespace EXE201_Backend.Models.Dto
+namespace EXE201_Backend.Models.Dto
 {
     public class WorkshopDetailsDto
     {
@@ -17,5 +17,11 @@
         public bool Liked { get; set; }
         public IEnumerable<string> Images { get; set; } = null!;
         public IEnumerable<WorkshopScheduleDetailsDto> Schedules { get; set; } = null!;
+
+        // Host / instructor info
+        public int HostId { get; set; }
+        public string HostName { get; set; } = string.Empty;
+        public string? HostAvatarLink { get; set; }
+        public string? HostLocation { get; set; }
     }
 }
