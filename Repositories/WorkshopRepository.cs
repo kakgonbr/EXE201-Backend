@@ -33,6 +33,7 @@ namespace EXE201_Backend.Repositories
             IQueryable<Workshop> query = _db.Workshops
                 .Include(w => w.Category)
                 .Include(w => w.Level)
+                .Include(w => w.CreatedByNavigation)
                 .Include(w => w.WorkshopReviews!)
                 .Include(w => w.WorkshopImages!)
                 .Include(w => w.WorkshopSchedules!)
